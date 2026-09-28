@@ -1,0 +1,6 @@
+# Cloudflare Worker: NS proxy for Ritkosten (train details, live positions). Deploy: npx wrangler deploy
+name = "ritkosten-proxy"
+main = "proxy/ns-worker.mjs"
+compatibility_date = "2026-09-01"
+workers_dev = true
+# NS_API_KEY is a secret: npx wrangler secret put NS_API_KEY

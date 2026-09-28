@@ -22,7 +22,6 @@
  * only for train details via /ns/train (journey + virtual train, both allowed with the free key).
  */
 
-const NS_TRIPS = 'https://gateway.apiportal.ns.nl/reisinformatie-api/api/v3/trips';
 const NS_JOURNEY = 'https://gateway.apiportal.ns.nl/reisinformatie-api/api/v2/journey';
 const NS_VIRTUAL_TRAIN = 'https://gateway.apiportal.ns.nl/virtual-train-api/api/v1/trein';
 const NS_VEHICLES = 'https://gateway.apiportal.ns.nl/virtual-train-api/api/vehicle';
@@ -30,10 +29,50 @@ const DOUBLE_DECK = /^(VIRM|DDZ|DDAR|DD-AR|MDDM|NID)/i;
 const ALLOWED_IMAGE_HOST = 'https://vt.ns-mlab.nl/';
 const FACILITY_ORDER = ['WIFI', 'STROOM', 'STILTE', 'TOILET', 'FIETS', 'TOEGANKELIJK'];
 
-async function nsGet(url, env) {
+// ---- Protecting the free NS key (300 requests / 5 min for ALL users together) ----------------
+// Per-isolate memory: approximate, but it keeps us well under NS's limit in practice.
+const NS_BUDGET = 270; // leave headroom under 300
+const WINDOW_MS = 5 * 60_000;
+let budget = { start: 0, used: 0 };
+const cache = new Map(); // url → { at, data }
+const CACHE_MS = 60_000;
+
+function takeBudget() {
+  const now = Date.now();
+  if (now - budget.start > WINDOW_MS) budget = { start: now, used: 0 };
+  if (budget.used >= NS_BUDGET) return false;
+  budget.used++;
+  return true;
+}
+
+async function nsGet(url, env, maxAgeMs = CACHE_MS) {
+  const hit = cache.get(url);
+  if (hit && Date.now() - hit.at < maxAgeMs) return hit.data;
+  if (!takeBudget()) {
+    if (hit) return hit.data; // serve stale rather than exceed NS's limit
+    throw new Error('ns budget');
+  }
   const res = await fetch(url, { headers: { 'Ocp-Apim-Subscription-Key': env.NS_API_KEY } });
   if (!res.ok) throw new Error(`ns ${res.status}`);
-  return res.json();
+  const data = await res.json();
+  cache.set(url, { at: Date.now(), data });
+  if (cache.size > 500) cache.delete(cache.keys().next().value);
+  return data;
+}
+
+// Simple per-client limit against abuse: 60 requests per minute per IP.
+const perIp = new Map();
+function allowClient(request) {
+  const ip = request.headers.get('CF-Connecting-IP') || 'local';
+  const now = Date.now();
+  const e = perIp.get(ip);
+  if (!e || now - e.start > 60_000) {
+    perIp.set(ip, { start: now, n: 1 });
+    if (perIp.size > 5000) perIp.clear();
+    return true;
+  }
+  e.n++;
+  return e.n <= 60;
 }
 
 /**
@@ -131,54 +170,6 @@ function cors(body, status = 200, extra = {}) {
   });
 }
 
-const MODE = { TRAIN: 'train', BUS: 'bus', TRAM: 'tram', METRO: 'metro', FERRY: 'ferry', WALK: 'walk' };
-
-function mapLeg(l) {
-  const walk = l.travelType === 'WALK';
-  const o = l.origin || {};
-  const d = l.destination || {};
-  const dep = o.actualDateTime || o.plannedDateTime;
-  const arr = d.actualDateTime || d.plannedDateTime;
-  const delay = o.actualDateTime && o.plannedDateTime ? Math.round((Date.parse(o.actualDateTime) - Date.parse(o.plannedDateTime)) / 60000) : 0;
-  return {
-    mode: walk ? 'walk' : MODE[(l.product && l.product.type) || 'TRAIN'] || 'other',
-    line: walk ? undefined : (l.product && (l.product.categoryCode || l.product.displayName)) || l.name,
-    lineLong: l.product && l.product.longCategoryName,
-    operator: l.product && l.product.operatorName,
-    headsign: l.direction,
-    from: { name: o.name || '', lat: o.lat, lon: o.lng, platform: o.actualTrack || o.plannedTrack, plannedPlatform: o.plannedTrack },
-    to: { name: d.name || '', lat: d.lat, lon: d.lng, platform: d.actualTrack || d.plannedTrack, plannedPlatform: d.plannedTrack },
-    plannedDeparture: o.plannedDateTime,
-    plannedArrival: d.plannedDateTime,
-    departure: dep,
-    arrival: arr,
-    realtime: !!o.actualDateTime,
-    delayMin: delay || undefined,
-    cancelled: !!l.cancelled,
-    distanceMeters: l.distanceInMeters,
-    durationMin: Math.round((Date.parse(arr) - Date.parse(dep)) / 60000),
-    intermediateStops: Math.max(0, ((l.stops && l.stops.length) || 2) - 2),
-    tripNumber: l.product && l.product.number,
-  };
-}
-
-function mapTrip(t, i) {
-  const legs = (t.legs || []).map(mapLeg);
-  return {
-    id: `ns:${t.ctxRecon || i}`,
-    providerId: 'ns',
-    legs,
-    departure: legs[0] && legs[0].departure,
-    arrival: legs[legs.length - 1] && legs[legs.length - 1].arrival,
-    durationMin: t.actualDurationInMinutes || t.plannedDurationInMinutes,
-    transfers: t.transfers || 0,
-    realtime: legs.some((l) => l.realtime),
-    // Only trust the price when NS itself knows the total (isTotalPriceUnknown = false).
-    apiFullFareCents:
-      t.productFare && !(t.fareOptions && t.fareOptions.isTotalPriceUnknown) ? t.productFare.priceInCents : undefined,
-  };
-}
-
 // Positions of all ~300 NS-tracked trains, shared for 10 s (one NS call serves every client).
 let positions = { at: 0, data: null };
 
@@ -186,45 +177,38 @@ async function trainPosition(q, env) {
   const rit = (q.get('rit') || '').replace(/\D/g, '');
   if (!rit) return cors(JSON.stringify({ error: 'rit required' }), 400);
   if (!positions.data || Date.now() - positions.at > 10_000) {
-    const all = await nsGet(NS_VEHICLES, env);
+    const all = await nsGet(NS_VEHICLES, env, 10_000);
     positions = { at: Date.now(), data: (all.payload && all.payload.treinen) || [] };
   }
   const t = positions.data.find((x) => String(x.treinNummer) === rit || String(x.ritId) === rit);
   if (!t) return cors(JSON.stringify({ error: 'no position' }), 404, { 'Cache-Control': 'no-store' });
-  return cors(JSON.stringify({ rit, lat: t.lat, lon: t.lng, speedKmh: Math.round(t.snelheid || 0), heading: t.richting, at: new Date(positions.at).toISOString() }), 200, {
-    'Cache-Control': 'public, max-age=10',
-  });
+  return cors(
+    JSON.stringify({ rit, lat: t.lat, lon: t.lng, speedKmh: Math.round(t.snelheid || 0), heading: t.richting, at: new Date(positions.at).toISOString() }),
+    200,
+    { 'Cache-Control': 'public, max-age=10' },
+  );
 }
 
 export default {
   async fetch(request, env) {
     if (request.method === 'OPTIONS') return cors(null, 204, { 'Access-Control-Allow-Methods': 'GET' });
     const url = new URL(request.url);
+    if (url.pathname === '/health') return cors(JSON.stringify({ ok: true, ns: !!env.NS_API_KEY }), 200, { 'Cache-Control': 'no-store' });
     if (!env.NS_API_KEY) return cors(JSON.stringify({ error: 'NS_API_KEY not configured' }), 503);
-    if (url.pathname === '/ns/train') return trainInfo(url.searchParams, env);
-    if (url.pathname === '/ns/position') return trainPosition(url.searchParams, env);
-    if (url.pathname !== '/ns/trips') return cors(JSON.stringify({ error: 'not found' }), 404);
-
-    const q = url.searchParams;
-    const num = (k) => Number(q.get(k));
-    if (![num('fromLat'), num('fromLon'), num('toLat'), num('toLon')].every(Number.isFinite)) {
-      return cors(JSON.stringify({ error: 'bad coordinates' }), 400);
+    if (!allowClient(request)) return cors(JSON.stringify({ error: 'too many requests' }), 429, { 'Retry-After': '30' });
+    try {
+      return await route(url, env);
+    } catch (e) {
+      const busy = String(e && e.message).includes('budget');
+      return cors(JSON.stringify({ error: busy ? 'busy' : 'ns unavailable' }), busy ? 503 : 502, busy ? { 'Retry-After': '60' } : {});
     }
-    const params = new URLSearchParams({
-      originLat: q.get('fromLat'),
-      originLng: q.get('fromLon'),
-      destinationLat: q.get('toLat'),
-      destinationLng: q.get('toLon'),
-      dateTime: q.get('dateTime') || new Date().toISOString(),
-      searchForArrival: q.get('searchForArrival') === 'true' ? 'true' : 'false',
-      // Door-to-door: let NS add walking to/from the station.
-      originWalk: 'true',
-      destinationWalk: 'true',
-      lang: 'nl',
-    });
-    const res = await fetch(`${NS_TRIPS}?${params}`, { headers: { 'Ocp-Apim-Subscription-Key': env.NS_API_KEY } });
-    if (!res.ok) return cors(JSON.stringify({ error: `ns ${res.status}` }), res.status === 429 ? 429 : 502);
-    const data = await res.json();
-    return cors(JSON.stringify({ itineraries: (data.trips || []).map(mapTrip) }));
   },
 };
+
+async function route(url, env) {
+  if (url.pathname === '/ns/train') return trainInfo(url.searchParams, env);
+  if (url.pathname === '/ns/position') return trainPosition(url.searchParams, env);
+  if (url.pathname === '/health') return cors(JSON.stringify({ ok: true }), 200, { 'Cache-Control': 'no-store' });
+  // /ns/trips (door-to-door planning) is not allowed with a free NS key, so it isn't offered.
+  return cors(JSON.stringify({ error: 'not found' }), 404);
+}
