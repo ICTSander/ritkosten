@@ -16,7 +16,7 @@
  */
 import type { Leg, TransitItinerary } from '../transit';
 import { toNlLocal } from '../nlTime';
-import { type Effect, type LegScope, productFor, type TransitProfile } from './products';
+import { type Effect, holidaysKnownFor, type LegScope, productFor, type TransitProfile } from './products';
 import { btmTariffFor, type FareData, nsRow } from './tariffs';
 
 export interface FareLine {
@@ -155,7 +155,12 @@ export function calculatePublicTransportCost(
   }
 
   if (profile.product !== 'none' && profile.product !== 'ns-flex') {
-    notes.add('Feestdagen en toeslagen (zoals Intercity direct) zijn niet meegerekend.');
+    const year = journey.legs[0] ? toNlLocal(journey.legs[0].departure).year : new Date().getFullYear();
+    notes.add(
+      holidaysKnownFor(year)
+        ? 'Toeslagen (zoals Intercity direct) en 1e klas zijn niet meegerekend.'
+        : `Feestdagen in ${year} en toeslagen (zoals Intercity direct) zijn niet meegerekend.`,
+    );
   }
 
   const fullFareCents = lines.reduce((s, l) => s + l.fullCents, 0);

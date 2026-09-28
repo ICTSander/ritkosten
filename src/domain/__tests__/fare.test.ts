@@ -51,6 +51,8 @@ describe('products', () => {
     expect(isNsOffPeak(at(2026, 9, 29, 6, 29))).toBe(true);
     expect(isNsOffPeak(at(2026, 9, 29, 6, 30))).toBe(false);
     expect(isNsOffPeak(at(2026, 10, 3, 8, 0))).toBe(true); // Saturday
+    expect(isNsOffPeak(at(2026, 4, 27, 8, 0))).toBe(true); // Koningsdag: all day
+    expect(isNsOffPeak(at(2026, 5, 5, 8, 0))).toBe(false); // 5 May 2026 is not an NS holiday
   });
 
   it('student week product: free Mon 04:00 – Sat 04:00, otherwise 40% train / 34% BTM', () => {
@@ -62,13 +64,31 @@ describe('products', () => {
     expect(p.effect('other-train', at(2026, 7, 20, 12, 0))).toEqual({ type: 'percent', pct: 40 }); // summer
   });
 
-  it('student weekend product: free Fri 12:00 – Mon 04:00; weekdays full before 09:00', () => {
+  it('student weekend product follows the DUO table', () => {
     const p = productFor({ product: 'student-weekend' });
-    expect(p.effect('ns-train', at(2026, 10, 2, 11, 59))).toEqual({ type: 'percent', pct: 40 });
+    expect(p.effect('ns-train', at(2026, 10, 2, 8, 0))).toEqual({ type: 'none' }); // Fri 04–09 full
+    expect(p.effect('ns-train', at(2026, 10, 2, 11, 59))).toEqual({ type: 'percent', pct: 40 }); // Fri 09–12
     expect(p.effect('ns-train', at(2026, 10, 2, 12, 0))).toEqual({ type: 'free' });
-    expect(p.effect('btm', at(2026, 10, 5, 3, 59))).toEqual({ type: 'free' });
-    expect(p.effect('ns-train', at(2026, 10, 5, 7, 0))).toEqual({ type: 'none' });
-    expect(p.effect('btm', at(2026, 10, 5, 9, 0))).toEqual({ type: 'percent', pct: 34 });
+    expect(p.effect('btm', at(2026, 10, 5, 3, 59))).toEqual({ type: 'free' }); // Mon before 04:00
+    expect(p.effect('ns-train', at(2026, 10, 5, 7, 0))).toEqual({ type: 'percent', pct: 40 }); // Mon: discount all day
+    expect(p.effect('ns-train', at(2026, 10, 6, 7, 0))).toEqual({ type: 'none' }); // Tue 04–09 full
+    expect(p.effect('btm', at(2026, 10, 6, 9, 0))).toEqual({ type: 'percent', pct: 34 });
+  });
+
+  it('student products on public holidays (DUO 2026)', () => {
+    const week = productFor({ product: 'student-week' });
+    const weekend = productFor({ product: 'student-weekend' });
+    // Koningsdag, Monday 27 April 2026
+    expect(week.effect('ns-train', at(2026, 4, 27, 10))).toEqual({ type: 'percent', pct: 40 });
+    expect(week.effect('ns-train', at(2026, 4, 28, 3, 59))).toEqual({ type: 'percent', pct: 40 }); // until 04:00 next day
+    expect(week.effect('ns-train', at(2026, 4, 28, 4, 0))).toEqual({ type: 'free' });
+    expect(weekend.effect('ns-train', at(2026, 4, 27, 10))).toEqual({ type: 'free' });
+    // Good Friday: free with both products
+    expect(week.effect('btm', at(2026, 4, 3, 10))).toEqual({ type: 'free' });
+    // Ascension Day: weekend product free from 12:00 the day before
+    expect(weekend.effect('ns-train', at(2026, 5, 13, 11, 59))).toEqual({ type: 'percent', pct: 40 });
+    expect(weekend.effect('ns-train', at(2026, 5, 13, 12, 0))).toEqual({ type: 'free' });
+    expect(week.effect('ns-train', at(2026, 5, 14, 12, 0))).toEqual({ type: 'percent', pct: 40 });
   });
 
   it('NS products only apply to NS trains', () => {

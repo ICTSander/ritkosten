@@ -169,6 +169,17 @@ export default function Settings() {
         />
       </Card>
 
+      <SectionLabel>Weergave</SectionLabel>
+      <Segmented
+        value={s.appearance}
+        onChange={s.setAppearance}
+        options={[
+          { value: 'system', label: 'Systeem' },
+          { value: 'light', label: 'Licht' },
+          { value: 'dark', label: 'Donker' },
+        ]}
+      />
+
       <SectionLabel>Privacy</SectionLabel>
       <Card padded={false}>
         <ListRow

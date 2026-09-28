@@ -108,8 +108,8 @@ export default function OvProfileScreen() {
                   />
                   <AppText variant="footnote" color={c.textSecondary}>
                     {studentKind === 'week'
-                      ? 'Gratis van maandag 04:00 tot zaterdag 04:00. Daarbuiten 40% korting op de trein en 34% op bus, tram en metro.'
-                      : 'Gratis van vrijdag 12:00 tot maandag 04:00. Doordeweeks vanaf 09:00 korting (40% trein, 34% bus/tram/metro).'}
+                      ? 'Gratis van maandag 04:00 tot zaterdag 04:00. In het weekend, op feestdagen en in de zomer (16 juli – 16 augustus) 40% korting op de trein en 34% op bus, tram en metro.'
+                      : 'Gratis van vrijdag 12:00 tot maandag 04:00 en op feestdagen. Maandag de hele dag korting; dinsdag t/m vrijdag vol tarief van 04:00 tot 09:00, daarna korting (40% trein, 34% bus/tram/metro).'}
                   </AppText>
                 </View>
               ) : null}

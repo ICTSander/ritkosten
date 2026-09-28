@@ -25,6 +25,8 @@ export interface RecentDestination {
 /** 'ask' = not asked yet; 'device' = use GPS; 'manual' = user types a start point. */
 export type StartMode = 'ask' | 'device' | 'manual';
 
+export type Appearance = 'system' | 'light' | 'dark';
+
 export interface AppState {
   hydrated: boolean;
   vehicle: Vehicle | null;
@@ -35,6 +37,7 @@ export interface AppState {
   manualStart: Place | null;
   recents: RecentDestination[];
   transitProfile: TransitProfile;
+  appearance: Appearance;
   /** True once the user answered (or skipped) the OV discount question. */
   transitProfileAsked: boolean;
   /** In-memory only: the trip currently being calculated. */
@@ -53,6 +56,7 @@ export interface AppState {
   setDestination: (p: Place | null) => void;
   rememberTrip: (p: Place, costs: { carCents?: number; transitCents?: number }) => void;
   setTransitProfile: (p: TransitProfile) => void;
+  setAppearance: (a: Appearance) => void;
   setTimeQuery: (t: TimeQuery) => void;
   setSelectedItinerary: (it: TransitItinerary | null) => void;
   removeRecent: (id: string) => void;
@@ -93,6 +97,7 @@ const initial = {
   manualStart: null,
   recents: [],
   transitProfile: DEFAULT_TRANSIT_PROFILE,
+  appearance: 'system' as Appearance,
   transitProfileAsked: false,
   destination: null,
   timeQuery: { kind: 'now' } as TimeQuery,
@@ -129,6 +134,7 @@ export const useApp = create<AppState>()(
       setDestination: (destination) => set({ destination }),
       rememberTrip: (place, costs) => set((s) => ({ recents: addRecent(s.recents, place, costs) })),
       setTransitProfile: (transitProfile) => set({ transitProfile, transitProfileAsked: true }),
+      setAppearance: (appearance) => set({ appearance }),
       setTimeQuery: (timeQuery) => set({ timeQuery }),
       setSelectedItinerary: (selectedItinerary) => set({ selectedItinerary }),
       removeRecent: (id) => set((s) => ({ recents: s.recents.filter((r) => r.place.id !== id) })),
@@ -148,6 +154,7 @@ export const useApp = create<AppState>()(
         recents: s.recents,
         transitProfile: s.transitProfile,
         transitProfileAsked: s.transitProfileAsked,
+        appearance: s.appearance,
       }),
       // v1 → v2: keep car, settings and recents; add the OV profile. Unknown shapes reset.
       migrate: (persisted, version) => {

@@ -8,12 +8,13 @@ import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useApp } from '@/state/store';
-import { usePalette } from '@/ui/theme';
+import { useIsDark, usePalette } from '@/ui/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
   const c = usePalette();
+  const isDark = useIsDark();
   const hydrated = useApp((s) => s.hydrated);
   const [fontsLoaded, fontError] = useFonts({
     Geist_400Regular,
@@ -33,7 +34,7 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="auto" />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
           headerShown: false,

@@ -1,5 +1,7 @@
 import { useColorScheme } from 'react-native';
 
+import { useApp } from '../state/store';
+
 /**
  * Design tokens. One accent — Dutch road-sign blue — used sparingly.
  * Contrast: textSecondary ≥ 4.5:1 on bg/surface in both schemes.
@@ -82,7 +84,7 @@ export const modeColors = {
 export type ModeColorKey = keyof typeof modeColors.light;
 
 export function useModeColors() {
-  return useColorScheme() === 'dark' ? modeColors.dark : modeColors.light;
+  return useIsDark() ? modeColors.dark : modeColors.light;
 }
 
 export const fonts = {
@@ -111,12 +113,15 @@ export const radius = { input: 14, card: 18, sheet: 24, pill: 999, plate: 8 } as
 export const GUTTER = 20;
 export const MAX_WIDTH = 560;
 
-export function usePalette(): Palette {
-  return useColorScheme() === 'dark' ? dark : light;
+/** Dark mode: the user's choice in "Weergave", or the system setting. */
+export function useIsDark(): boolean {
+  const system = useColorScheme();
+  const appearance = useApp((s) => s.appearance);
+  return appearance === 'system' ? system === 'dark' : appearance === 'dark';
 }
 
-export function useIsDark(): boolean {
-  return useColorScheme() === 'dark';
+export function usePalette(): Palette {
+  return useIsDark() ? dark : light;
 }
 
 export const palettes = { light, dark };
