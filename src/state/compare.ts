@@ -122,6 +122,28 @@ export function useCarComparison(
 
 // ---- OV ---------------------------------------------------------------------------------
 
+/**
+ * Puts the most useful journey first (it's the one on the OV card):
+ *  - "aankomst om": the journey that leaves LATEST while still arriving on time;
+ *  - otherwise: the earliest departure.
+ */
+export function orderForQuery<T extends { itinerary: TransitItinerary }>(options: T[], time: TimeQuery, nowMs?: number): T[] {
+  const byDeparture = [...options]
+    // Journeys that already left are useless ("arrive by" searches can return them).
+    .filter((o) => nowMs === undefined || Date.parse(o.itinerary.departure) >= nowMs - 60_000)
+    .sort((a, b) => Date.parse(a.itinerary.departure) - Date.parse(b.itinerary.departure));
+  if (time.kind !== 'arrive') return byDeparture;
+  const deadline = Date.parse(time.at);
+  const onTime = byDeparture.filter((o) => Date.parse(o.itinerary.arrival) <= deadline);
+  const late = byDeparture.filter((o) => Date.parse(o.itinerary.arrival) > deadline);
+  return [...onTime.reverse(), ...late];
+}
+
+/** Latest time to leave by car to arrive on time (drive time without traffic). */
+export function latestCarDeparture(arriveAtIso: string, driveMin: number): string {
+  return new Date(Date.parse(arriveAtIso) - driveMin * 60_000).toISOString();
+}
+
 export interface PricedItinerary {
   itinerary: TransitItinerary;
   fare: FareQuote;
@@ -132,11 +154,25 @@ export type TransitState =
   | { status: 'error'; failure: Failure }
   | { status: 'ok'; options: PricedItinerary[]; provider: PublicTransportProvider };
 
-async function loadTransit(from: { lat: number; lon: number }, to: { lat: number; lon: number }, time: TimeQuery, signal: AbortSignal) {
+async function loadTransit(
+  from: { lat: number; lon: number },
+  to: { lat: number; lon: number },
+  time: TimeQuery,
+  nowMs: number,
+  signal: AbortSignal,
+) {
   if (!availableTransitProviders().length) {
     throw new FailureError({ kind: 'unavailable', message: 'Er is geen OV-planner beschikbaar in deze versie.' });
   }
-  return withTransitProvider((p) => p.plan(from, to, time, { signal }));
+  const res = await withTransitProvider((p) => p.plan(from, to, time, { signal }));
+  // "Aankomst om" too soon: every journey that makes it has already left. Then show the first
+  // journeys leaving now instead (the card says they arrive later than asked).
+  const upcoming = res.result.itineraries.some((it) => Date.parse(it.departure) >= nowMs - 60_000);
+  if (time.kind === 'arrive' && !upcoming) {
+    const next = await res.provider.plan(from, to, { kind: 'depart', at: new Date(nowMs).toISOString() }, { signal });
+    return { provider: res.provider, result: { itineraries: [...res.result.itineraries, ...next.itineraries] } };
+  }
+  return res;
 }
 
 export function useTransitComparison(from: StartPoint | null, to: Place | null, attempt: number): TransitState {
@@ -150,15 +186,19 @@ export function useTransitComparison(from: StartPoint | null, to: Place | null, 
   const toLat = to?.lat ?? 0;
   const toLon = to?.lon ?? 0;
   const res = useAsyncResource(from && to ? `${coordKey(from)}>${coordKey(to)}|${timeKey}|${attempt}` : null, (signal) =>
-    loadTransit({ lat: fromLat, lon: fromLon }, { lat: toLat, lon: toLon }, time, signal),
+    loadTransit({ lat: fromLat, lon: fromLon }, { lat: toLat, lon: toLon }, time, openedAt, signal),
   );
 
   if (res.status === 'error') return { status: 'error', failure: toFailure(res.error, 'OV-reizen zoeken') };
   if (res.status !== 'ok') return { status: 'loading' };
-  const options = res.data.result.itineraries
-    // A "trip" that is only walking isn't an OV option.
-    .filter((it) => it.legs.some((l) => l.mode !== 'walk'))
-    .map((itinerary) => ({ itinerary, fare: calculatePublicTransportCost(itinerary, profile, FARE_DATA_2026) }));
+  const options = orderForQuery(
+    res.data.result.itineraries
+      // A "trip" that is only walking isn't an OV option.
+      .filter((it) => it.legs.some((l) => l.mode !== 'walk'))
+      .map((itinerary) => ({ itinerary, fare: calculatePublicTransportCost(itinerary, profile, FARE_DATA_2026) })),
+    time,
+    openedAt,
+  );
   if (!options.length) {
     return { status: 'error', failure: { kind: 'no-route', message: 'Er rijdt op dit tijdstip geen openbaar vervoer naar deze bestemming.' } };
   }

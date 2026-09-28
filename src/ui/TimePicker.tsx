@@ -17,14 +17,35 @@ export function timeQueryLabel(q: TimeQuery): string {
   return `${q.kind === 'depart' ? 'Vertrek' : 'Aankomst'} ${day}${formatNlClock(q.at)}`;
 }
 
-/** Compact picker: now / depart at / arrive at, a day chip row and a 5-minute stepper. No native module needed. */
-export function TimePicker({ value, onDone }: { value: TimeQuery; onDone: (q: TimeQuery) => void }) {
+/**
+ * Compact picker: now / depart at / arrive at, a day chip row and a 5-minute stepper.
+ * `arriveOnly` turns it into the "Hoe laat wil je er zijn?" step. No native module needed.
+ */
+export function TimePicker({
+  value,
+  onDone,
+  arriveOnly = false,
+  submitLabel = 'Toon reizen',
+}: {
+  value: TimeQuery;
+  onDone: (q: TimeQuery) => void;
+  arriveOnly?: boolean;
+  submitLabel?: string;
+}) {
   const c = usePalette();
-  const [kind, setKind] = useState<TimeQuery['kind']>(value.kind);
-  const [initial] = useState(() => (value.kind === 'now' ? roundUp5(Date.now()) : Date.parse(value.at)));
-  const [dayOffset, setDayOffset] = useState(() => dayDiff(initial));
+  const [kind, setKind] = useState<TimeQuery['kind']>(arriveOnly ? 'arrive' : value.kind);
+  const [openedAt] = useState(() => Date.now());
+  // Reuse the previous choice only if it is still in the future.
+  const [initial] = useState(() =>
+    value.kind !== 'now' && Date.parse(value.at) > openedAt
+      ? Date.parse(value.at)
+      : arriveOnly
+        ? roundUp15(openedAt) + 60 * 60_000
+        : roundUp5(openedAt),
+  );
+  const [dayOffset, setDayOffset] = useState(() => dayDiff(initial, openedAt));
   const [minutes, setMinutes] = useState(() => toNlLocal(initial).minutes);
-  const [today] = useState(() => toNlLocal(Date.now()));
+  const [today] = useState(() => toNlLocal(openedAt));
 
   const bump = (delta: number) => setMinutes((m) => (m + delta + 1440) % 1440);
   const iso = () => {
@@ -33,18 +54,22 @@ export function TimePicker({ value, onDone }: { value: TimeQuery; onDone: (q: Ti
     const d = new Date(base);
     return nlLocalToIso(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate(), Math.floor(minutes / 60), minutes % 60);
   };
+  // An arrival (or departure) that has already passed can't be planned.
+  const inPast = kind !== 'now' && dayOffset === 0 && minutes <= today.minutes + (kind === 'arrive' ? 5 : -1);
 
   return (
     <View style={{ gap: space.lg }}>
-      <Segmented
-        value={kind}
-        onChange={setKind}
-        options={[
-          { value: 'now', label: 'Nu' },
-          { value: 'depart', label: 'Vertrek om' },
-          { value: 'arrive', label: 'Aankomst om' },
-        ]}
-      />
+      {arriveOnly ? null : (
+        <Segmented
+          value={kind}
+          onChange={setKind}
+          options={[
+            { value: 'now', label: 'Nu' },
+            { value: 'depart', label: 'Vertrek om' },
+            { value: 'arrive', label: 'Aankomst om' },
+          ]}
+        />
+      )}
       {kind !== 'now' ? (
         <>
           <View style={styles.days}>
@@ -56,15 +81,26 @@ export function TimePicker({ value, onDone }: { value: TimeQuery; onDone: (q: Ti
           <View style={styles.clockRow}>
             <Step label="15 minuten eerder" text="−15" onPress={() => bump(-15)} />
             <Step label="5 minuten eerder" text="−5" onPress={() => bump(-5)} />
-            <AppText style={[styles.clock, { color: c.text }]} accessibilityLabel={`Tijd ${Math.floor(minutes / 60)} uur ${minutes % 60}`}>
+            <AppText
+              style={[styles.clock, { color: inPast ? c.textTertiary : c.text }]}
+              accessibilityLabel={`${kind === 'arrive' ? 'Aankomsttijd' : 'Vertrektijd'} ${Math.floor(minutes / 60)} uur ${minutes % 60}`}>
               {String(Math.floor(minutes / 60)).padStart(2, '0')}:{String(minutes % 60).padStart(2, '0')}
             </AppText>
             <Step label="5 minuten later" text="+5" onPress={() => bump(5)} />
             <Step label="15 minuten later" text="+15" onPress={() => bump(15)} />
           </View>
+          {inPast ? (
+            <AppText variant="footnote" color={c.warning} accessibilityLiveRegion="polite">
+              Dat tijdstip is vandaag al voorbij. Kies een latere tijd of een andere dag.
+            </AppText>
+          ) : null}
         </>
       ) : null}
-      <Button title="Toon reizen" onPress={() => onDone(kind === 'now' ? { kind: 'now' } : { kind, at: iso() })} />
+      <Button
+        title={submitLabel}
+        disabled={inPast}
+        onPress={() => onDone(kind === 'now' ? { kind: 'now' } : { kind, at: iso() })}
+      />
     </View>
   );
 }
@@ -89,9 +125,14 @@ function roundUp5(ms: number): number {
   return Math.ceil(ms / step) * step;
 }
 
-function dayDiff(ms: number): number {
+function roundUp15(ms: number): number {
+  const step = 15 * 60_000;
+  return Math.ceil(ms / step) * step;
+}
+
+function dayDiff(ms: number, nowMs: number): number {
   const a = toNlLocal(ms);
-  const b = toNlLocal(Date.now());
+  const b = toNlLocal(nowMs);
   const da = Date.UTC(a.year, a.month - 1, a.day);
   const db = Date.UTC(b.year, b.month - 1, b.day);
   return Math.max(0, Math.min(6, Math.round((da - db) / 86_400_000)));

@@ -45,6 +45,7 @@ export default function RootLayout() {
         <Stack.Screen name="car" />
         <Stack.Screen name="ready" options={{ gestureEnabled: false }} />
         <Stack.Screen name="search" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="when" />
         <Stack.Screen name="compare" />
         <Stack.Screen name="journey" />
         <Stack.Screen name="ov-profile" />

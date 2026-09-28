@@ -13,7 +13,16 @@ import {
   sortItineraries,
   type TransitSort,
 } from '@/domain/transit';
-import { type CarState, type Failure, type PricedItinerary, type TransitState, useCarComparison, useStartPoint, useTransitComparison } from '@/state/compare';
+import {
+  type CarState,
+  type Failure,
+  latestCarDeparture,
+  type PricedItinerary,
+  type TransitState,
+  useCarComparison,
+  useStartPoint,
+  useTransitComparison,
+} from '@/state/compare';
 import { useOnline } from '@/state/hooks';
 import { useApp } from '@/state/store';
 import { openDirections } from '@/services/maps';
@@ -40,6 +49,7 @@ export default function CompareScreen() {
   const [attempt, setAttempt] = useState(0);
   const [roundTrip, setRoundTrip] = useState(false);
   const [showTime, setShowTime] = useState(false);
+  const [openedAt] = useState(() => Date.now());
   /** Price typed in because CBS was unreachable — this screen only, never persisted. */
   const [tripPrice, setTripPrice] = useState<ResolvedPrice | null>(null);
 
@@ -125,7 +135,7 @@ export default function CompareScreen() {
         </View>
       ) : (
         <>
-          <CarCard state={car} mult={mult} onRetry={() => setAttempt((n) => n + 1)} onTripPrice={setTripPrice} destination={destination} />
+          <CarCard state={car} mult={mult} onRetry={() => setAttempt((n) => n + 1)} onTripPrice={setTripPrice} destination={destination} nowMs={openedAt} />
           <Difference car={car} transit={transit} mult={mult} />
           <TransitCard state={transit} mult={mult} onRetry={() => setAttempt((n) => n + 1)} onPickTime={() => setShowTime(true)} />
           {transit.status === 'ok' && transit.options.length > 1 ? <MoreOptions state={transit} /> : null}
@@ -178,7 +188,9 @@ function CarCard({
   onRetry,
   onTripPrice,
   destination,
+  nowMs,
 }: {
+  nowMs: number;
   state: CarState & { reloadPrice: () => void };
   mult: number;
   onRetry: () => void;
@@ -187,6 +199,7 @@ function CarCard({
 }) {
   const c = usePalette();
   const vehicle = useApp((s) => s.vehicle)!;
+  const timeQuery = useApp((s) => s.timeQuery);
   const fuel = vehicle.pricedFuel;
   const [price, setPrice] = useState<number | null>(null);
 
@@ -218,6 +231,34 @@ function CarCard({
               {state.cost.components.map((x) => x.label).join(' + ')} · {formatUnitPrice(state.price.price.pricePerUnit)} {perUnit(fuel)}
             </AppText>
           </View>
+          {timeQuery.kind === 'arrive' && state.route.durationMin
+            ? (() => {
+                const leaveBy = latestCarDeparture(timeQuery.at, state.route.durationMin);
+                const tooLate = Date.parse(leaveBy) < nowMs;
+                return (
+                  <View style={[styles.leaveBy, { backgroundColor: tooLate ? c.warningSoft : c.accentSoft }]}>
+                    <Icon name={tooLate ? 'warning' : 'clock'} size={16} color={tooLate ? c.warning : c.accent} />
+                    {tooLate ? (
+                      <AppText variant="callout" style={{ flex: 1 }}>
+                        Om {formatNlClock(timeQuery.at)} aankomen lukt niet meer. Vertrek je nu, dan ben je er ± om{' '}
+                        <AppText variant="headline">
+                          {formatNlClock(new Date(nowMs + state.route.durationMin * 60_000).toISOString())}
+                        </AppText>
+                        .
+                      </AppText>
+                    ) : (
+                      <AppText variant="callout" style={{ flex: 1 }}>
+                        Vertrek uiterlijk <AppText variant="headline">{formatNlClock(leaveBy)}</AppText>
+                        <AppText variant="footnote" color={c.textSecondary}>
+                          {' '}
+                          · zonder file
+                        </AppText>
+                      </AppText>
+                    )}
+                  </View>
+                );
+              })()
+            : null}
           <AppText variant="numeric" style={{ marginTop: space.sm }}>
             {state.route.durationMin ? `${formatDuration(state.route.durationMin * mult)} · ` : ''}
             {formatKm(state.route.distanceKm * mult)} · ± {formatDecimal(state.cost.fuel.unitsUsed * mult, 1)} {fuel === 'electricity' ? 'kWh' : 'L'}
@@ -243,6 +284,7 @@ function CarCard({
 function TransitCard({ state, mult, onRetry, onPickTime }: { state: TransitState; mult: number; onRetry: () => void; onPickTime: () => void }) {
   const c = usePalette();
   const profile = useApp((s) => s.transitProfile);
+  const timeQuery = useApp((s) => s.timeQuery);
   const asked = useApp((s) => s.transitProfileAsked);
   const setSelected = useApp((s) => s.setSelectedItinerary);
   const product = productFor(profile);
@@ -273,6 +315,12 @@ function TransitCard({ state, mult, onRetry, onPickTime }: { state: TransitState
                     : 'Vol tarief'}
                 {best.fare.isEstimate ? ' · geschatte prijs' : ''}
               </AppText>
+              {timeQuery.kind === 'arrive' && Date.parse(it.arrival) > Date.parse(timeQuery.at) ? (
+                <AppText variant="footnote" color={c.warning} style={{ marginTop: space.sm }}>
+                  Om {formatNlClock(timeQuery.at)} aankomen lukt niet meer met het OV. Dit is de eerstvolgende reis: je bent er om{' '}
+                  {formatNlClock(it.arrival)}.
+                </AppText>
+              ) : null}
               <AppText variant="numeric" style={{ marginTop: space.sm }}>
                 {formatNlClock(it.departure)} → {formatNlClock(it.arrival)} · {formatDuration(it.durationMin)} ·{' '}
                 {it.transfers === 0 ? 'direct' : `${it.transfers}× overstappen`}
@@ -485,6 +533,7 @@ const styles = StyleSheet.create({
   modeHeader: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginBottom: space.sm },
   modeIcon: { width: 32, height: 32, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
   diff: { paddingVertical: space.md, paddingHorizontal: space.lg },
+  leaveBy: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.md, borderRadius: 12, marginTop: space.md },
   filters: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   option: { paddingHorizontal: space.lg, paddingVertical: space.md, gap: 2 },
   optionTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },

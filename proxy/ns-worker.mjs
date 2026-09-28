@@ -10,9 +10,12 @@
  * NS terms (https://www.ns.nl/binaries/content/assets/ns-nl/voorwaarden/overeenkomst-tot-gebruik-van-api.pdf):
  * only for informing travellers about journeys; never use NS logos; don't imply NS checked the data.
  *
- * TODO(verify-with-key): field names below come from public NS responses seen in open-source clients,
- * not from the (login-only) OpenAPI spec. Verify `originLat/originLng/destinationLat/destinationLng`,
- * `legs[].product`, `origin.actualTrack` and `productFare.priceInCents` once a key is available.
+ * Parameters and fields checked against the official Reisinformatie API spec (operation getTravelAdvice,
+ * GET /api/v3/trips) on 2026-09-28: originLat/originLng, destinationLat/destinationLng, originWalk,
+ * destinationWalk, dateTime, searchForArrival; Trip.legs/transfers/plannedDurationInMinutes/productFare
+ * (TripTravelFare.priceInCents)/fareOptions.isTotalPriceUnknown; Leg.travelType/product/origin/destination/
+ * stops/distanceInMeters/cancelled; TripOriginDestination.lat/lng/plannedDateTime/actualDateTime/…Track.
+ * Rate limit for free users: 300 requests per 5 minutes → responses are cached for 60 s.
  */
 
 const NS_TRIPS = 'https://gateway.apiportal.ns.nl/reisinformatie-api/api/v3/trips';
@@ -54,6 +57,7 @@ function mapLeg(l) {
     realtime: !!o.actualDateTime,
     delayMin: delay || undefined,
     cancelled: !!l.cancelled,
+    distanceMeters: l.distanceInMeters,
     durationMin: Math.round((Date.parse(arr) - Date.parse(dep)) / 60000),
     intermediateStops: Math.max(0, ((l.stops && l.stops.length) || 2) - 2),
     tripNumber: l.product && l.product.number,
@@ -71,7 +75,9 @@ function mapTrip(t, i) {
     durationMin: t.actualDurationInMinutes || t.plannedDurationInMinutes,
     transfers: t.transfers || 0,
     realtime: legs.some((l) => l.realtime),
-    apiFullFareCents: t.productFare && t.productFare.priceInCents,
+    // Only trust the price when NS itself knows the total (isTotalPriceUnknown = false).
+    apiFullFareCents:
+      t.productFare && !(t.fareOptions && t.fareOptions.isTotalPriceUnknown) ? t.productFare.priceInCents : undefined,
   };
 }
 
@@ -94,6 +100,9 @@ export default {
       destinationLng: q.get('toLon'),
       dateTime: q.get('dateTime') || new Date().toISOString(),
       searchForArrival: q.get('searchForArrival') === 'true' ? 'true' : 'false',
+      // Door-to-door: let NS add walking to/from the station.
+      originWalk: 'true',
+      destinationWalk: 'true',
       lang: 'nl',
     });
     const res = await fetch(`${NS_TRIPS}?${params}`, { headers: { 'Ocp-Apim-Subscription-Key': env.NS_API_KEY } });

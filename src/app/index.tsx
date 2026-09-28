@@ -1,5 +1,4 @@
 import { Redirect, router } from 'expo-router';
-import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { productFor } from '@/domain/fare/products';
@@ -10,7 +9,6 @@ import { useApp } from '@/state/store';
 import { AppText, Banner, Card, IconButton, ListRow, Screen, SectionLabel } from '@/ui/components';
 import { Icon, type IconName } from '@/ui/Icon';
 import { placeIcon, vehicleChip } from '@/ui/labels';
-import { TimePicker, timeQueryLabel } from '@/ui/TimePicker';
 import { fonts, radius, space, type, usePalette } from '@/ui/theme';
 
 export default function Home() {
@@ -19,18 +17,15 @@ export default function Home() {
   const recents = useApp((s) => s.recents);
   const startMode = useApp((s) => s.startMode);
   const manualStart = useApp((s) => s.manualStart);
-  const timeQuery = useApp((s) => s.timeQuery);
-  const setTimeQuery = useApp((s) => s.setTimeQuery);
   const transitProfile = useApp((s) => s.transitProfile);
   const setDestination = useApp((s) => s.setDestination);
   const online = useOnline();
-  const [showTime, setShowTime] = useState(false);
 
   if (!vehicle) return <Redirect href="/car" />;
 
   const openRecent = (place: Place) => {
     setDestination(place);
-    router.push('/compare');
+    router.push('/when');
   };
   const startLabel = startMode === 'device' ? 'Mijn huidige locatie' : manualStart ? manualStart.label : 'Kies bij je eerste rit';
   const product = productFor(transitProfile);
@@ -82,34 +77,7 @@ export default function Home() {
             </AppText>
           </View>
         </Pressable>
-        <View style={[styles.divider, { backgroundColor: c.separator }]} />
-        <Pressable
-          onPress={() => setShowTime((s) => !s)}
-          accessibilityRole="button"
-          accessibilityLabel={`${timeQueryLabel(timeQuery)}. Wijzigen`}
-          style={styles.settingItem}>
-          <Icon name="clock" size={16} color={c.accent} />
-          <View style={{ flex: 1 }}>
-            <AppText variant="caption" color={c.textSecondary}>
-              VERTREK
-            </AppText>
-            <AppText variant="callout" numberOfLines={1}>
-              {timeQuery.kind === 'now' ? 'Nu' : timeQueryLabel(timeQuery)}
-            </AppText>
-          </View>
-        </Pressable>
       </View>
-      {showTime ? (
-        <Card style={{ marginTop: space.sm }}>
-          <TimePicker
-            value={timeQuery}
-            onDone={(q) => {
-              setTimeQuery(q);
-              setShowTime(false);
-            }}
-          />
-        </Card>
-      ) : null}
 
       {recents.length > 0 ? (
         <>

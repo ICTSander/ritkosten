@@ -2,6 +2,7 @@ import { calculateCarCost } from '../carCost';
 import { compareModes } from '../comparison';
 import { amsterdamOffsetMinutes, formatNlClock, nlLocalToIso, toNlLocal } from '../nlTime';
 import { filterItineraries, sortItineraries, type TransitItinerary } from '../transit';
+import { latestCarDeparture, orderForQuery } from '../../state/compare';
 
 describe('Dutch local time', () => {
   it('handles summer and winter time and the switch-over', () => {
@@ -87,5 +88,37 @@ describe('itinerary filters', () => {
   it('keeps only journeys whose vehicles are all allowed', () => {
     expect(filterItineraries(list, { modes: ['train', 'bus'] }).map((x) => x.id)).toEqual(['a', 'b']);
     expect(filterItineraries(list, { modes: ['train'] }).map((x) => x.id)).toEqual(['b']);
+  });
+});
+
+describe('arrival time', () => {
+  const opt = (id: string, dep: string, arr: string) => ({ itinerary: { id, departure: dep, arrival: arr } as TransitItinerary });
+  const options = [
+    opt('early', '2026-09-28T12:00:00Z', '2026-09-28T13:00:00Z'),
+    opt('best', '2026-09-28T12:30:00Z', '2026-09-28T13:25:00Z'),
+    opt('late', '2026-09-28T13:00:00Z', '2026-09-28T14:00:00Z'),
+  ];
+
+  it('picks the latest departure that still arrives on time', () => {
+    const r = orderForQuery(options, { kind: 'arrive', at: '2026-09-28T13:30:00Z' });
+    expect(r.map((o) => o.itinerary.id)).toEqual(['best', 'early', 'late']);
+  });
+
+  it('falls back to the first late journey when none is on time', () => {
+    const r = orderForQuery(options, { kind: 'arrive', at: '2026-09-28T12:50:00Z' });
+    expect(r[0].itinerary.id).toBe('early');
+  });
+
+  it('otherwise orders by departure', () => {
+    expect(orderForQuery([...options].reverse(), { kind: 'now' }).map((o) => o.itinerary.id)).toEqual(['early', 'best', 'late']);
+  });
+
+  it('drops journeys that already departed', () => {
+    const r = orderForQuery(options, { kind: 'arrive', at: '2026-09-28T13:30:00Z' }, Date.parse('2026-09-28T12:10:00Z'));
+    expect(r.map((o) => o.itinerary.id)).toEqual(['best', 'late']);
+  });
+
+  it('computes the latest car departure', () => {
+    expect(latestCarDeparture('2026-09-28T13:30:00.000Z', 95)).toBe('2026-09-28T11:55:00.000Z');
   });
 });

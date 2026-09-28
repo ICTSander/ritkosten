@@ -41,7 +41,8 @@ export default function SearchScreen() {
         ? { status: 'error' as const }
         : search;
 
-  const goToResult = () => router.replace('/compare');
+  // Next: the (required) arrival time, then the comparison.
+  const goToResult = () => router.replace('/when');
 
   const pickDestination = (place: Place) => {
     Keyboard.dismiss();
