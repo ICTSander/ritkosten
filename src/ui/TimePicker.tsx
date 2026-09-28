@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { formatNlClock, nlLocalToIso, toNlLocal } from '../domain/nlTime';
 import type { TimeQuery } from '../domain/transit';
 import { AppText, Button, Chip, Segmented } from './components';
-import { fonts, radius, space, usePalette } from './theme';
+import { fonts, space, usePalette } from './theme';
 
 const DAYS = ['zo', 'ma', 'di', 'wo', 'do', 'vr', 'za'];
 
@@ -115,7 +115,7 @@ function Step({ text, label, onPress }: { text: string; label: string; onPress: 
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
-      style={({ pressed }) => [styles.step, { backgroundColor: c.surfaceMuted, opacity: pressed ? 0.6 : 1 }]}>
+      style={({ pressed }) => [styles.step, { backgroundColor: c.surface, borderColor: c.separator, borderBottomColor: c.edge, borderBottomWidth: pressed ? 2 : 5, marginTop: pressed ? 3 : 0 }]}>
       <AppText variant="callout" color={c.accent} style={{ fontFamily: fonts.mono }}>
         {text}
       </AppText>
@@ -145,5 +145,5 @@ const styles = StyleSheet.create({
   days: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   clockRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   clock: { fontFamily: fonts.monoBold, fontSize: 56, lineHeight: 64, textAlign: 'center', fontVariant: ['tabular-nums'] },
-  step: { flex: 1, height: 48, borderRadius: radius.input, alignItems: 'center', justifyContent: 'center' },
+  step: { flex: 1, height: 48, borderRadius: 14, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
 });

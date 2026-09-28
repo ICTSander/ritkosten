@@ -47,17 +47,17 @@ export function TripProgress({ itinerary, progress }: { itinerary: TransitItiner
   );
 }
 
-const LINE_Y = 8;
+const LINE_Y = 10;
 
 const styles = StyleSheet.create({
   wrap: { paddingVertical: 6 },
   track: { flexDirection: 'row', position: 'relative' },
   segment: { flexBasis: 0, minWidth: 18 },
-  lineRow: { height: 16, flexDirection: 'row', alignItems: 'center' },
-  solid: { flex: 1, height: 5, borderRadius: 3 },
-  dotted: { flex: 1, borderTopWidth: 2, borderStyle: 'dotted', marginHorizontal: 1 },
-  node: { width: 12, height: 12, borderRadius: 6, borderWidth: 2, marginHorizontal: -2, zIndex: 1 },
-  iconRow: { alignItems: 'center', marginTop: 4 },
-  fill: { position: 'absolute', left: 0, top: LINE_Y - 3, height: 6, borderRadius: 3 },
-  marker: { position: 'absolute', top: LINE_Y - 7, width: 14, height: 14, borderRadius: 7, borderWidth: 3, marginLeft: -7 },
+  lineRow: { height: 20, flexDirection: 'row', alignItems: 'center' },
+  solid: { flex: 1, height: 12, borderRadius: 6 },
+  dotted: { flex: 1, borderTopWidth: 4, borderStyle: 'dotted', marginHorizontal: 2 },
+  node: { width: 14, height: 14, borderRadius: 7, borderWidth: 3, marginHorizontal: -2, zIndex: 1 },
+  iconRow: { alignItems: 'center', marginTop: 6 },
+  fill: { position: 'absolute', left: 0, top: LINE_Y - 6, height: 12, borderRadius: 6 },
+  marker: { position: 'absolute', top: LINE_Y - 10, width: 20, height: 20, borderRadius: 10, borderWidth: 4, marginLeft: -10 },
 });

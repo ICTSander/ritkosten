@@ -1,29 +1,37 @@
-import { useColorScheme } from 'react-native';
+import { type TextStyle, useColorScheme } from 'react-native';
 
 import { useApp } from '../state/store';
 
 /**
- * Design tokens. One accent — Dutch road-sign blue — used sparingly.
- * Contrast: textSecondary ≥ 4.5:1 on bg/surface in both schemes.
+ * Design tokens. Layout of iOS grouped lists (grey page, white blocks) with a friendly,
+ * chunky touch: rounded Nunito, one green accent and buttons with a pressable bottom edge.
+ * Contrast: textSecondary ≥ 4.5:1 on bg/surface; white on accent ≥ 4.5:1.
  */
 const light = {
-  bg: '#F3F4F6',
+  bg: '#F2F2F7',
   surface: '#FFFFFF',
-  surfaceMuted: '#ECEEF1',
+  surfaceMuted: '#EBEBF0',
   surfaceRaised: '#FFFFFF',
-  text: '#0F1216',
-  textSecondary: '#545C66',
-  textTertiary: '#7A828C',
-  separator: '#E1E4E8',
-  accent: '#0A5BB0',
-  accentPressed: '#084A90',
+  text: '#1C1C1E',
+  textSecondary: '#5B5B60',
+  textTertiary: '#86868B',
+  separator: '#E3E3E8',
+  accent: '#15803D',
+  accentPressed: '#126E34',
+  /** Darker bottom edge that makes primary buttons look pressable. */
+  accentEdge: '#0E5E2C',
   onAccent: '#FFFFFF',
-  accentSoft: '#E4EEF9',
+  accentSoft: '#DCF3E4',
+  /** Edge under white (secondary) buttons and the search field. */
+  edge: '#D8D8DE',
+  highlight: '#FFF4D6',
+  highlightEdge: '#F5C542',
+  onHighlight: '#6B5200',
   warning: '#8F4B00',
   warningSoft: '#FFF3E0',
   error: '#B3261E',
   errorSoft: '#FDECEA',
-  success: '#1E7A46',
+  success: '#2BB673',
   plate: '#F4C400',
   plateInk: '#111111',
   plateBlue: '#1D4DA8',
@@ -31,23 +39,28 @@ const light = {
 };
 
 const dark: typeof light = {
-  bg: '#0B0D10',
-  surface: '#15181C',
-  surfaceMuted: '#1D2126',
-  surfaceRaised: '#343A42',
-  text: '#F1F3F5',
-  textSecondary: '#A2AAB3',
-  textTertiary: '#7C848E',
-  separator: 'rgba(255,255,255,0.09)',
-  accent: '#7AB0FF',
-  accentPressed: '#5E9BF5',
-  onAccent: '#06182E',
-  accentSoft: 'rgba(122,176,255,0.14)',
+  bg: '#000000',
+  surface: '#1C1C1E',
+  surfaceMuted: '#2C2C2E',
+  surfaceRaised: '#3A3A3C',
+  text: '#F2F2F7',
+  textSecondary: '#AEAEB2',
+  textTertiary: '#8E8E93',
+  separator: 'rgba(255,255,255,0.1)',
+  accent: '#3DD068',
+  accentPressed: '#34B95B',
+  accentEdge: '#23863F',
+  onAccent: '#052E12',
+  accentSoft: 'rgba(61,208,104,0.16)',
+  edge: '#0A0A0B',
+  highlight: '#2E2710',
+  highlightEdge: '#8A6D12',
+  onHighlight: '#F5D77A',
   warning: '#F2A93B',
   warningSoft: 'rgba(242,169,59,0.12)',
   error: '#FF7A70',
   errorSoft: 'rgba(255,122,112,0.12)',
-  success: '#5FD08F',
+  success: '#3DD068',
   plate: '#F4C400',
   plateInk: '#111111',
   plateBlue: '#1D4DA8',
@@ -88,28 +101,32 @@ export function useModeColors() {
 }
 
 export const fonts = {
-  regular: 'Geist_400Regular',
-  medium: 'Geist_500Medium',
-  semibold: 'Geist_600SemiBold',
-  bold: 'Geist_700Bold',
-  mono: 'GeistMono_500Medium',
-  monoBold: 'GeistMono_600SemiBold',
+  regular: 'Nunito_500Medium',
+  medium: 'Nunito_600SemiBold',
+  semibold: 'Nunito_700Bold',
+  bold: 'Nunito_800ExtraBold',
+  black: 'Nunito_900Black',
+  /** Numbers: same family, heavy; tabular figures are set where digits must not jump. */
+  mono: 'Nunito_700Bold',
+  monoBold: 'Nunito_900Black',
 } as const;
 
+const TABULAR: TextStyle['fontVariant'] = ['tabular-nums'];
+
 export const type = {
-  price: { fontFamily: fonts.monoBold, fontSize: 64, lineHeight: 72, letterSpacing: -2 },
-  largeTitle: { fontFamily: fonts.bold, fontSize: 32, lineHeight: 38, letterSpacing: -0.8 },
-  title: { fontFamily: fonts.semibold, fontSize: 22, lineHeight: 28, letterSpacing: -0.3 },
-  headline: { fontFamily: fonts.semibold, fontSize: 17, lineHeight: 22 },
+  price: { fontFamily: fonts.monoBold, fontSize: 60, lineHeight: 70, letterSpacing: -1.5, fontVariant: TABULAR },
+  largeTitle: { fontFamily: fonts.black, fontSize: 34, lineHeight: 40, letterSpacing: -0.5 },
+  title: { fontFamily: fonts.bold, fontSize: 22, lineHeight: 28, letterSpacing: -0.2 },
+  headline: { fontFamily: fonts.bold, fontSize: 17, lineHeight: 22 },
   body: { fontFamily: fonts.regular, fontSize: 17, lineHeight: 24 },
   callout: { fontFamily: fonts.medium, fontSize: 15, lineHeight: 20 },
   footnote: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18 },
-  caption: { fontFamily: fonts.medium, fontSize: 12, lineHeight: 16, letterSpacing: 0.2 },
-  numeric: { fontFamily: fonts.mono, fontSize: 15, lineHeight: 20 },
+  caption: { fontFamily: fonts.semibold, fontSize: 12, lineHeight: 16, letterSpacing: 0.3 },
+  numeric: { fontFamily: fonts.mono, fontSize: 15, lineHeight: 20, fontVariant: TABULAR },
 } as const;
 
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32, huge: 48 } as const;
-export const radius = { input: 14, card: 18, sheet: 24, pill: 999, plate: 8 } as const;
+export const radius = { input: 14, card: 16, button: 16, sheet: 24, pill: 999, plate: 8 } as const;
 export const GUTTER = 20;
 export const MAX_WIDTH = 560;
 

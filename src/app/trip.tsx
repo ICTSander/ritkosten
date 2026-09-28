@@ -120,6 +120,7 @@ export default function TripScreen() {
             </View>
           ) : (
             <>
+              <View style={[styles.countBox, { backgroundColor: urgent ? c.warningSoft : c.highlight, borderColor: urgent ? c.warning : c.highlightEdge }]}>
               <AppText
                 style={[styles.countdown, { color: urgent ? c.warning : c.text }]}
                 accessibilityRole="timer"
@@ -128,10 +129,11 @@ export default function TripScreen() {
                 numberOfLines={1}>
                 {formatCountdown(remaining)}
               </AppText>
-              <AppText variant="callout" color={c.textSecondary} style={{ textAlign: 'center' }}>
+              <AppText variant="headline" color={urgent ? c.warning : c.onHighlight} style={{ textAlign: 'center' }}>
                 {live.countdownLabel}
                 {delayMin > 0 ? ` · ${delayMin} min vertraging` : ''}
               </AppText>
+              </View>
 
               <View style={[styles.divider, { backgroundColor: c.separator }]} />
 
@@ -277,10 +279,11 @@ const styles = StyleSheet.create({
   top: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: space.sm, width: '100%', maxWidth: MAX_WIDTH + 16, alignSelf: 'center' },
   body: { flex: 1, paddingHorizontal: 20, gap: space.lg, width: '100%', maxWidth: MAX_WIDTH, alignSelf: 'center' },
   main: { gap: space.xs, paddingVertical: space.xl },
-  countdown: { fontFamily: fonts.monoBold, fontSize: 88, lineHeight: 96, letterSpacing: -3, textAlign: 'center' },
+  countBox: { borderRadius: 22, borderWidth: 2, borderBottomWidth: 6, paddingVertical: space.lg, paddingHorizontal: space.md, gap: 2 },
+  countdown: { fontFamily: fonts.monoBold, fontSize: 88, lineHeight: 96, letterSpacing: -1, textAlign: 'center', fontVariant: ['tabular-nums'] },
   divider: { height: StyleSheet.hairlineWidth, marginVertical: space.lg },
   instruction: { flexDirection: 'row', gap: space.lg, alignItems: 'flex-start' },
-  platform: { width: 72, borderRadius: radius.input, alignItems: 'center', paddingVertical: space.sm },
+  platform: { width: 72, borderRadius: 14, alignItems: 'center', paddingVertical: space.sm },
   platformNr: { fontFamily: fonts.monoBold, fontSize: 34, lineHeight: 40 },
   train: { marginTop: space.lg, borderRadius: radius.input, padding: space.md, gap: space.sm },
   trainMeta: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
@@ -288,7 +291,7 @@ const styles = StyleSheet.create({
   liveDot: { width: 8, height: 8, borderRadius: 4 },
   next: { gap: 2, paddingHorizontal: space.xs },
   manual: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: space.xs },
-  alertCard: { flexDirection: 'row', alignItems: 'center', gap: space.sm, borderWidth: StyleSheet.hairlineWidth, borderRadius: radius.input, padding: space.md },
+  alertCard: { flexDirection: 'row', alignItems: 'center', gap: space.sm, borderWidth: 2, borderRadius: radius.input, padding: space.md },
   alertOn: { flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'center' },
   footer: { paddingHorizontal: 20, paddingTop: space.md, width: '100%', maxWidth: MAX_WIDTH, alignSelf: 'center' },
 });

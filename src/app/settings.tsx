@@ -14,7 +14,7 @@ import { NumberStepper } from '@/ui/NumberStepper';
 import { productFor } from '@/domain/fare/products';
 import { nsTrainInfoAvailable } from '@/services/transit/nsTrainInfo';
 import { allTransitProviders } from '@/services/transit/registry';
-import { space, usePalette } from '@/ui/theme';
+import { fonts, space, usePalette } from '@/ui/theme';
 
 export default function Settings() {
   const c = usePalette();
@@ -56,7 +56,7 @@ export default function Settings() {
       <Card style={{ gap: space.md }}>
         {v.consumption ? (
           <>
-            <AppText variant="title" style={{ fontFamily: 'GeistMono_600SemiBold' }}>
+            <AppText variant="title" style={{ fontFamily: fonts.monoBold }}>
               {consumptionText(v.consumption)}
             </AppText>
             <AppText variant="footnote" color={c.textSecondary}>
@@ -112,7 +112,7 @@ export default function Settings() {
         ) : null}
         {price.status === 'ready' ? (
           <>
-            <AppText variant="title" style={{ fontFamily: 'GeistMono_600SemiBold' }}>
+            <AppText variant="title" style={{ fontFamily: fonts.monoBold }}>
               {formatUnitPrice(price.resolved.price.pricePerUnit)}{' '}
               <AppText variant="callout" color={c.textSecondary}>
                 {perUnit(fuel)}

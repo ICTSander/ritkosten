@@ -9,7 +9,7 @@ import { useApp } from '@/state/store';
 import { AppText, Banner, Card, IconButton, ListRow, Screen, SectionLabel } from '@/ui/components';
 import { Icon, type IconName } from '@/ui/Icon';
 import { placeIcon, vehicleChip } from '@/ui/labels';
-import { fonts, radius, space, type, usePalette } from '@/ui/theme';
+import { fonts, space, type, usePalette } from '@/ui/theme';
 
 export default function Home() {
   const c = usePalette();
@@ -56,7 +56,7 @@ export default function Home() {
         onPress={() => router.push('/search')}
         accessibilityRole="search"
         accessibilityLabel="Zoek een bestemming"
-        style={({ pressed }) => [styles.fakeSearch, { backgroundColor: c.surface, borderColor: c.separator, opacity: pressed ? 0.85 : 1 }]}>
+        style={({ pressed }) => [styles.fakeSearch, { backgroundColor: c.surface, borderColor: c.accent, borderBottomColor: c.accentEdge, opacity: pressed ? 0.85 : 1 }]}>
         <Icon name="search" size={22} color={c.accent} />
         <AppText style={[type.body, { color: c.textTertiary }]}>Zoek adres, plaats of station</AppText>
       </Pressable>
@@ -121,7 +121,7 @@ function Pill({ icon, text, label }: { icon: IconName; text: string; label: stri
       accessibilityRole="button"
       accessibilityLabel={`${label}. Wijzigen`}
       hitSlop={6}
-      style={({ pressed }) => [styles.pill, { backgroundColor: c.surface, borderColor: c.separator, opacity: pressed ? 0.7 : 1 }]}>
+      style={({ pressed }) => [styles.pill, { backgroundColor: c.surface, borderColor: c.separator, borderBottomColor: c.edge, opacity: pressed ? 0.7 : 1 }]}>
       <Icon name={icon} size={15} color={c.accent} />
       <AppText variant="caption" numberOfLines={1} style={{ fontSize: 13 }}>
         {text}
@@ -145,9 +145,9 @@ function PriceTag({ icon, cents }: { icon: IconName; cents: number }) {
 const styles = StyleSheet.create({
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: space.lg, paddingVertical: space.sm, width: '100%', maxWidth: 580, alignSelf: 'center', gap: space.sm },
   pills: { flexDirection: 'row', gap: space.sm, flex: 1, flexWrap: 'wrap' },
-  pill: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 34, paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth, maxWidth: '100%' },
+  pill: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 36, paddingHorizontal: space.md, borderRadius: 12, borderWidth: 2, borderBottomWidth: 4, maxWidth: '100%' },
   title: { marginTop: space.xxxl, marginBottom: space.xl },
-  fakeSearch: { flexDirection: 'row', alignItems: 'center', gap: space.md, height: 64, borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: space.xl, boxShadow: '0px 1px 2px rgba(15,18,22,0.05), 0px 8px 24px rgba(15,18,22,0.06)' },
+  fakeSearch: { flexDirection: 'row', alignItems: 'center', gap: space.md, height: 64, borderRadius: 20, borderWidth: 2, borderBottomWidth: 5, paddingHorizontal: space.xl },
   settingsRow: { flexDirection: 'row', alignItems: 'stretch', marginTop: space.md, borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: space.md },
   settingItem: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 44, paddingHorizontal: space.xs },
   divider: { width: StyleSheet.hairlineWidth, marginHorizontal: space.sm },

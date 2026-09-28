@@ -126,9 +126,11 @@ export function Button({
   style?: ViewStyle;
 }) {
   const c = usePalette();
-  const bg = variant === 'primary' ? c.accent : variant === 'secondary' ? c.surfaceMuted : 'transparent';
+  const bg = variant === 'primary' ? c.accent : variant === 'secondary' ? c.surface : 'transparent';
   const fg = variant === 'primary' ? c.onAccent : variant === 'secondary' ? c.text : c.accent;
+  const edge = variant === 'primary' ? c.accentEdge : variant === 'secondary' ? c.edge : 'transparent';
   const inactive = disabled || loading;
+  // Chunky "pressable" look: a darker bottom edge that flattens when you press.
   return (
     <Pressable
       onPress={onPress}
@@ -138,8 +140,15 @@ export function Button({
       accessibilityState={{ disabled: inactive, busy: loading }}
       style={({ pressed }) => [
         styles.button,
-        variant === 'plain' && { height: 44 },
-        { backgroundColor: pressed && variant === 'primary' ? c.accentPressed : bg, opacity: disabled ? 0.45 : pressed && variant !== 'primary' ? 0.7 : 1 },
+        variant === 'plain'
+          ? { height: 44, borderBottomWidth: 0 }
+          : {
+              borderBottomColor: edge,
+              borderBottomWidth: pressed && !inactive ? 1 : 5,
+              marginTop: pressed && !inactive ? 4 : 0,
+            },
+        variant === 'secondary' && { borderWidth: 2, borderColor: c.separator, borderBottomColor: edge },
+        { backgroundColor: bg, opacity: disabled ? 0.45 : pressed && variant === 'plain' ? 0.6 : 1 },
         style,
       ]}>
       {loading ? (
@@ -147,7 +156,7 @@ export function Button({
       ) : (
         <>
           {icon ? <Icon name={icon} size={18} color={fg} /> : null}
-          <AppText variant="headline" color={fg}>
+          <AppText variant="headline" color={fg} style={{ fontFamily: fonts.black }}>
             {title}
           </AppText>
         </>
@@ -162,7 +171,7 @@ export function Card({ children, style, padded = true }: { children: ReactNode; 
     <View
       style={[
         styles.card,
-        { backgroundColor: c.surface, borderColor: c.separator, padding: padded ? space.lg : 0 },
+        { backgroundColor: c.surface, padding: padded ? space.lg : 0 },
         style,
       ]}>
       {children}
@@ -199,13 +208,13 @@ export function ListRow({
       accessibilityLabel={accessibilityLabel ?? [title, subtitle].filter(Boolean).join(', ')}
       style={({ pressed }) => [styles.row, { backgroundColor: pressed ? c.surfaceMuted : 'transparent' }]}>
       {icon ? (
-        <View style={[styles.rowIcon, { backgroundColor: c.surfaceMuted }]}>
-          <Icon name={icon} size={18} color={c.textSecondary} />
+        <View style={[styles.rowIcon, { backgroundColor: c.accentSoft }]}>
+          <Icon name={icon} size={18} color={c.accent} />
         </View>
       ) : null}
       <View style={[styles.rowBody, !first && { borderTopWidth: StyleSheet.hairlineWidth, borderColor: c.separator }]}>
         <View style={{ flex: 1 }}>
-          <AppText variant="body" numberOfLines={1} style={{ fontFamily: fonts.medium }}>
+          <AppText variant="body" numberOfLines={1} style={{ fontFamily: fonts.semibold }}>
             {title}
           </AppText>
           {subtitle ? (
@@ -223,8 +232,8 @@ export function ListRow({
 export function SectionLabel({ children }: { children: string }) {
   const c = usePalette();
   return (
-    <AppText variant="caption" color={c.textSecondary} style={styles.sectionLabel} accessibilityRole="header">
-      {children.toUpperCase()}
+    <AppText variant="footnote" color={c.textSecondary} style={[styles.sectionLabel, { fontFamily: fonts.bold }]} accessibilityRole="header">
+      {children}
     </AppText>
   );
 }
@@ -237,7 +246,7 @@ export function SearchField({
 }: TextInputProps & { icon?: IconName; onClear?: () => void; inputRef?: React.Ref<TextInput> }) {
   const c = usePalette();
   return (
-    <View style={[styles.search, { backgroundColor: c.surface, borderColor: c.separator }]}>
+    <View style={[styles.search, { backgroundColor: c.surface, borderColor: c.accent, borderBottomColor: c.accentEdge }]}>
       <Icon name={icon} size={20} color={c.textSecondary} />
       <TextInput
         ref={inputRef}
@@ -332,6 +341,7 @@ export function Chip({
         {
           backgroundColor: selected ? c.accent : c.surface,
           borderColor: selected ? c.accent : c.separator,
+          borderBottomColor: selected ? c.accentEdge : c.edge,
           opacity: pressed ? 0.7 : 1,
         },
       ]}>
@@ -384,16 +394,16 @@ export const styles = StyleSheet.create({
   header: { height: 52, flexDirection: 'row', alignItems: 'center', paddingHorizontal: space.sm, maxWidth: MAX_WIDTH + 2 * space.sm, width: '100%', alignSelf: 'center' },
   headerSide: { width: 56 },
   iconButton: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  button: { height: 54, borderRadius: radius.pill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm, paddingHorizontal: space.xl },
-  card: { borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+  button: { height: 56, borderRadius: radius.button, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm, paddingHorizontal: space.xl },
+  card: { borderRadius: radius.card, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', paddingLeft: space.lg, minHeight: 60 },
-  rowIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginRight: space.md },
+  rowIcon: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginRight: space.md },
   rowBody: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, paddingRight: space.lg, minHeight: 60 },
-  sectionLabel: { marginTop: space.xxl, marginBottom: space.sm, marginLeft: space.xs },
-  search: { flexDirection: 'row', alignItems: 'center', gap: space.md, height: 56, borderRadius: radius.input, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: space.lg },
+  sectionLabel: { marginTop: space.xxl, marginBottom: space.sm, marginLeft: space.lg },
+  search: { flexDirection: 'row', alignItems: 'center', gap: space.md, height: 58, borderRadius: 18, borderWidth: 2, borderBottomWidth: 5, paddingHorizontal: space.lg },
   clear: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   banner: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, paddingHorizontal: space.lg, borderRadius: radius.input },
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 40, paddingHorizontal: space.lg, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 42, paddingHorizontal: space.lg, borderRadius: 14, borderWidth: 2, borderBottomWidth: 4 },
   segmented: { flexDirection: 'row', padding: 3, borderRadius: radius.pill },
   segment: { flex: 1, height: 36, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
 });
