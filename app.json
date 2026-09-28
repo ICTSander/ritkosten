@@ -63,6 +63,12 @@
       "typedRoutes": true,
       "reactCompiler": true
     },
-    "description": "Vergelijk voor elke reis wat het kost met de auto en met het OV, en reis stap voor stap met live treininfo."
+    "description": "Vergelijk voor elke reis wat het kost met de auto en met het OV, en reis stap voor stap met live treininfo.",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "5dfbff11-41a3-45a6-89af-a391d940b4ca"
+      }
+    }
   }
 }
