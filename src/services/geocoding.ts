@@ -5,8 +5,18 @@
  * Both are queried in parallel; results are merged and de-duplicated.
  * Nominatim is deliberately NOT used: its policy forbids autocomplete.
  */
+import { allStations } from '../domain/fare/tariffUnits';
 import type { Place } from '../domain/types';
+import { fuzzyScore, normalize, toSolrFuzzy } from './fuzzy';
 import { fetchJson, isAbort, type FetchJsonOptions } from './http';
+
+// Session cache: typing back (backspace) or re-searching is instant. Small LRU-ish map.
+const resultCache = new Map<string, Place[]>();
+function remember(key: string, places: Place[]): Place[] {
+  resultCache.set(key, places);
+  if (resultCache.size > 150) resultCache.delete(resultCache.keys().next().value as string);
+  return places;
+}
 
 type HttpOpts = Pick<FetchJsonOptions, 'fetchFn' | 'signal'>;
 
@@ -185,7 +195,37 @@ export function mergeResults(query: string, pdok: Place[], photon: Place[], limi
   return out;
 }
 
+/** Instant local matches first, then remote results that aren't the same place. */
+export function withLocalFirst(local: Place[], remote: Place[], limit = 9): Place[] {
+  const out = [...local];
+  for (const p of remote) {
+    const dup = out.some(
+      (o) =>
+        normalize(o.label) === normalize(p.label) &&
+        approxDistanceM(o, p) < (o.kind === 'station' || o.kind === 'city' || p.kind === 'city' ? 3000 : 300),
+    );
+    if (!dup) out.push(p);
+  }
+  return out.slice(0, limit);
+}
+
 export async function searchPdok(query: string, http: HttpOpts = {}): Promise<Place[]> {
+  const key = `pdok:${normalize(query)}`;
+  const hit = resultCache.get(key);
+  if (hit) return hit;
+  const exact = await pdokSuggest(query, http);
+  // Nothing found? Probably a typo — PDOK (Solr) supports fuzzy words with "~" (~0.15 s).
+  if (exact.length || toSolrFuzzy(query) === query) return remember(key, exact);
+  // Fuzzy results come back loosely ordered: rank them by how well they fit the typed words.
+  const fuzzy = await pdokSuggest(toSolrFuzzy(query), http);
+  const ranked = fuzzy
+    .map((p, i) => ({ p, s: fuzzyScore(query, `${p.label} ${p.detail ?? ''}`), i }))
+    .sort((x, y) => y.s - x.s || x.i - y.i)
+    .map((x) => x.p);
+  return remember(key, ranked);
+}
+
+async function pdokSuggest(query: string, http: HttpOpts): Promise<Place[]> {
   const params = new URLSearchParams({
     q: query,
     rows: '6',
@@ -207,6 +247,9 @@ export async function searchPhoton(
   bias: { lat: number; lon: number } | undefined,
   http: HttpOpts = {},
 ): Promise<Place[]> {
+  const key = `photon:${normalize(query)}:${bias ? `${bias.lat.toFixed(1)},${bias.lon.toFixed(1)}` : ''}`;
+  const hit = resultCache.get(key);
+  if (hit) return hit;
   const params = new URLSearchParams({ q: query, limit: '8', lang: 'default' });
   // Photon accepts repeated osm_tag filters. Keep railway STATIONS (important for OV trips),
   // but drop platforms/stop positions/bus stops that duplicate station and POI names.
@@ -237,7 +280,44 @@ export async function searchPhoton(
     timeoutMs: 6000,
     ...http,
   });
-  return (data.features ?? []).map(mapPhotonFeature).filter((p): p is Place => p !== null);
+  return remember(key, (data.features ?? []).map(mapPhotonFeature).filter((p): p is Place => p !== null));
+}
+
+const STATIONS: Place[] = allStations().map((s) => ({
+  id: `station:${s.code}`,
+  label: s.names[0],
+  detail: 'Station',
+  lat: s.lat,
+  lon: s.lon,
+  countryCode: 'NL',
+  kind: 'station',
+  source: 'local',
+}));
+const STATION_TEXT = new Map(allStations().map((s) => [`station:${s.code}`, s.names.join(' ')]));
+
+/**
+ * Instant, offline matches while typing: stations and the user's own recent places,
+ * tolerant to typos and word order. No network involved.
+ */
+export function searchLocal(query: string, recents: Place[] = [], limit = 4): Place[] {
+  const q = query.trim();
+  if (q.length < 2) return [];
+  const scored: { p: Place; s: number }[] = [];
+  for (const p of recents) {
+    const s = fuzzyScore(q, `${p.label} ${p.detail ?? ''}`);
+    if (s) scored.push({ p, s: s + 1 }); // own places first on a tie
+  }
+  // Only suggest stations when the query looks like a station ("station", "centraal", or matches its name).
+  for (const p of STATIONS) {
+    const s = fuzzyScore(q, `${STATION_TEXT.get(p.id)} station`);
+    if (s) scored.push({ p, s });
+  }
+  const seen = new Set<string>();
+  return scored
+    .sort((a, b) => b.s - a.s)
+    .filter(({ p }) => (seen.has(p.label.toLowerCase()) ? false : (seen.add(p.label.toLowerCase()), true)))
+    .slice(0, limit)
+    .map(({ p }) => p);
 }
 
 export interface SearchOutcome {

@@ -5,7 +5,7 @@ import { ActivityIndicator, Keyboard, Pressable, StyleSheet, View } from 'react-
 import type { Place } from '@/domain/types';
 import { useAsyncResource, useDebounced, useOnline } from '@/state/hooks';
 import { useApp } from '@/state/store';
-import { searchPlaces } from '@/services/geocoding';
+import { mergeResults, searchLocal, searchPdok, searchPhoton, withLocalFirst } from '@/services/geocoding';
 import { requestAndGetPosition } from '@/services/location';
 import { AppText, Banner, Button, Card, IconButton, ListRow, Screen, SearchField, SectionLabel } from '@/ui/components';
 import { Icon } from '@/ui/Icon';
@@ -28,18 +28,36 @@ export default function SearchScreen() {
   const online = useOnline();
 
   const [query, setQuery] = useState('');
-  const debounced = useDebounced(query.trim(), 300);
-  const search = useAsyncResource(debounced.length >= 2 ? `${debounced}|${manualStart?.id ?? ''}` : null, (signal) =>
-    searchPlaces(debounced, { signal, bias: manualStart ?? undefined }),
+  const debounced = useDebounced(query.trim(), 150);
+  // Three sources, shown as soon as each is ready (the slowest never blocks the rest):
+  //  1. local — stations + your recent places, instant and typo-tolerant (no network)
+  //  2. PDOK — Dutch addresses/places, ~0.1 s, retries fuzzy on a typo
+  //  3. Photon — POIs and abroad, typo-tolerant but 1–3 s
+  const typedNow = query.trim();
+  const local = mode === 'destination' || mode === 'start' ? searchLocal(typedNow, recents.map((r) => r.place)) : [];
+  const biasKey = manualStart ? `${manualStart.lat.toFixed(1)},${manualStart.lon.toFixed(1)}` : '';
+  const pdok = useAsyncResource(debounced.length >= 2 ? `pdok|${debounced}` : null, (signal) => searchPdok(debounced, { signal }));
+  const photon = useAsyncResource(debounced.length >= 2 ? `photon|${debounced}|${biasKey}` : null, (signal) =>
+    searchPhoton(debounced, manualStart ?? undefined, { signal }),
   );
+  const remote = mergeResults(
+    debounced,
+    pdok.status === 'ok' ? pdok.data : [],
+    photon.status === 'ok' ? photon.data : [],
+  );
+  const merged = withLocalFirst(local, remote);
+  const stillLoading = debounced !== typedNow || pdok.status === 'loading' || photon.status === 'loading';
+  const bothFailed = pdok.status === 'error' && photon.status === 'error';
   const results =
-    search.status === 'ok'
-      ? search.data.failed
-        ? { status: 'error' as const }
-        : { status: 'ok' as const, places: search.data.places }
-      : search.status === 'error'
-        ? { status: 'error' as const }
-        : search;
+    typedNow.length < 2
+      ? { status: 'idle' as const }
+      : merged.length
+        ? { status: 'ok' as const, places: merged }
+        : bothFailed
+          ? { status: 'error' as const }
+          : stillLoading
+            ? { status: 'loading' as const }
+            : { status: 'ok' as const, places: [] };
 
   // Next: the (required) arrival time, then the comparison.
   const goToResult = () => router.replace('/when');
@@ -166,7 +184,7 @@ export default function SearchScreen() {
             </View>
           ) : results.status === 'ok' && results.places.length === 0 ? (
             <AppText color={c.textSecondary} style={{ marginTop: space.xl }}>
-              Geen plek gevonden voor ‘{debounced}’. Probeer een plaatsnaam, adres of postcode.
+              Geen plek gevonden voor ‘{typedNow}’. Probeer een plaatsnaam, adres of postcode.
             </AppText>
           ) : results.status === 'ok' ? (
             <>
@@ -175,6 +193,14 @@ export default function SearchScreen() {
                   <ListRow key={p.id} first={i === 0} icon={placeIcon(p)} title={p.label} subtitle={p.detail} onPress={() => onPick(p)} />
                 ))}
               </Card>
+              {stillLoading ? (
+                <View style={styles.more}>
+                  <ActivityIndicator size="small" color={c.textTertiary} />
+                  <AppText variant="caption" color={c.textTertiary}>
+                    Meer resultaten zoeken…
+                  </AppText>
+                </View>
+              ) : null}
               <AppText variant="caption" color={c.textTertiary} style={{ marginTop: space.sm, textAlign: 'right' }}>
                 Kaartdata © OpenStreetMap-bijdragers, PDOK
               </AppText>
@@ -231,5 +257,6 @@ const styles = StyleSheet.create({
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 20, paddingRight: space.md, paddingVertical: space.sm, width: '100%', maxWidth: 580, alignSelf: 'center' },
   fromRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth, minHeight: 44 },
   center: { paddingVertical: space.xxxl, alignItems: 'center' },
+  more: { flexDirection: 'row', alignItems: 'center', gap: space.sm, justifyContent: 'center', paddingTop: space.md },
   promptIcon: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
 });

@@ -72,3 +72,8 @@ export function nearestStationName(lat: number, lon: number, maxM = 2500): strin
   const i = nearestStationIndex(lat, lon, maxM);
   return i >= 0 ? stations[i].n[0] : undefined;
 }
+
+/** All stations (for instant local search). */
+export function allStations(): { code: string; names: string[]; lat: number; lon: number }[] {
+  return stations.filter((s) => s.lat).map((s) => ({ code: s.c, names: s.n, lat: s.lat, lon: s.lon }));
+}

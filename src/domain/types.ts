@@ -62,7 +62,7 @@ export interface Place {
   lon: number;
   countryCode?: string;
   kind: 'address' | 'city' | 'postcode' | 'street' | 'poi' | 'station' | 'current-location';
-  source: 'pdok' | 'photon' | 'device';
+  source: 'pdok' | 'photon' | 'device' | 'local';
 }
 
 export interface Route {
