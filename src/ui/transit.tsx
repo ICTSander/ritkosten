@@ -4,8 +4,6 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { formatDuration } from '../domain/format';
 import { formatNlClock } from '../domain/nlTime';
 import { type Leg, type LegMode, minutesBetween, type TransitItinerary } from '../domain/transit';
-import { type Crowd, fetchNsTrainInfo } from '../services/transit/nsTrainInfo';
-import { useAsyncResource } from '../state/hooks';
 import { AppText } from './components';
 import { Icon, type IconName } from './Icon';
 import { fonts, radius, space, useModeColors, usePalette } from './theme';
@@ -332,113 +330,6 @@ export function TrainCard({ leg }: { leg: Leg }) {
       <AppText variant="caption" color={c.textTertiary} style={{ marginTop: 4 }}>
         Illustratie
       </AppText>
-    </View>
-  );
-}
-
-const FACILITY_LABEL: Record<string, string> = {
-  WIFI: 'Wifi',
-  STROOM: 'Stopcontact',
-  STILTE: 'Stiltecoupé',
-  TOILET: 'Toilet',
-  FIETS: 'Fietsplek',
-  TOEGANKELIJK: 'Toegankelijk',
-};
-
-const CROWD: Record<Crowd, { label: string; tone: 'success' | 'warning' | 'error'; bars: number }> = {
-  LOW: { label: 'Rustig', tone: 'success', bars: 1 },
-  MEDIUM: { label: 'Gemiddeld druk', tone: 'warning', bars: 2 },
-  HIGH: { label: 'Druk', tone: 'error', bars: 3 },
-};
-
-/** Live NS details for one NS train ride: crowding, rolling stock, seats, facilities, notes. */
-export function NsTrainCard({ leg }: { leg: Leg }) {
-  const c = usePalette();
-  const rit = leg.tripNumber ?? '';
-  const planned = leg.plannedDeparture;
-  const info = useAsyncResource(rit ? `${rit}|${planned}` : null, (signal) => fetchNsTrainInfo(leg, signal));
-  const data = info.status === 'ok' ? info.data : null;
-  const crowd = data?.crowd ? CROWD[data.crowd] : null;
-  const toneColor = crowd ? c[crowd.tone] : c.textSecondary;
-
-  return (
-    <View style={[styles.trainCard, { backgroundColor: c.surfaceMuted, gap: space.sm }]}>
-      <View style={styles.rideMeta}>
-        <ModeBadge leg={leg} />
-        <AppText variant="headline" style={{ flex: 1 }} numberOfLines={1}>
-          {data?.category ?? leg.line ?? 'Trein'} {rit}
-        </AppText>
-      </View>
-      <AppText variant="footnote" color={c.textSecondary}>
-        {leg.from.name} → {leg.to.name} · {formatNlClock(leg.departure)} → {formatNlClock(leg.arrival)}
-      </AppText>
-
-      <TrainArt parts={data?.parts ?? 3} doubleDeck={data?.doubleDeck ?? /intercity|^ic/i.test(leg.line ?? '')} />
-
-      {info.status === 'loading' ? (
-        <AppText variant="footnote" color={c.textSecondary}>
-          Treininfo ophalen bij NS…
-        </AppText>
-      ) : info.status === 'error' ? (
-        <AppText variant="footnote" color={c.textSecondary}>
-          Treininfo van NS is nu niet beschikbaar.
-        </AppText>
-      ) : data ? (
-        <>
-          {crowd ? (
-            <View style={styles.infoRow} accessible accessibilityLabel={`Verwachte drukte bij instappen: ${crowd.label}`}>
-              <View style={styles.bars}>
-                {[1, 2, 3].map((b) => (
-                  <View key={b} style={[styles.bar, { height: 5 + b * 4, backgroundColor: b <= crowd.bars ? toneColor : c.separator }]} />
-                ))}
-              </View>
-              <AppText variant="callout">
-                {crowd.label}
-                <AppText variant="footnote" color={c.textSecondary}>
-                  {' '}
-                  · verwachte drukte bij instappen
-                </AppText>
-              </AppText>
-            </View>
-          ) : null}
-          {data.trainType || data.parts ? (
-            <AppText variant="callout">
-              {[data.trainType, data.parts ? `${data.parts} bakken` : undefined, data.lengthM ? `${data.lengthM} m` : undefined]
-                .filter(Boolean)
-                .join(' · ')}
-            </AppText>
-          ) : null}
-          {data.seatsSecond || data.seats ? (
-            <AppText variant="callout">
-              {data.seatsSecond ? `${data.seatsSecond} zitplaatsen 2e klas · ${data.seatsFirst ?? 0} 1e klas` : `${data.seats} zitplaatsen`}
-              {data.bikeSpots ? ` · ${data.bikeSpots} fietsplekken` : ''}
-            </AppText>
-          ) : null}
-          {data.shortened ? (
-            <View style={[styles.transferWarn, { backgroundColor: c.warningSoft, marginLeft: 0, marginBottom: 0 }]}>
-              <Icon name="warning" size={14} color={c.warning} />
-              <AppText variant="footnote">Kortere trein dan normaal</AppText>
-            </View>
-          ) : null}
-          {data.facilities.length ? (
-            <View style={styles.facilities}>
-              {data.facilities.map((f) => (
-                <View key={f} style={[styles.facility, { borderColor: c.separator, backgroundColor: c.surface }]}>
-                  <AppText variant="caption">{FACILITY_LABEL[f] ?? f}</AppText>
-                </View>
-              ))}
-            </View>
-          ) : null}
-          {data.notes.map((n, i) => (
-            <AppText key={i} variant="footnote" color={c.warning}>
-              {n}
-            </AppText>
-          ))}
-          <AppText variant="caption" color={c.textTertiary}>
-            Treininfo: NS (verwachting, kan wijzigen) · tekening: illustratie
-          </AppText>
-        </>
-      ) : null}
     </View>
   );
 }

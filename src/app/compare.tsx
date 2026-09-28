@@ -336,13 +336,12 @@ function TransitCard({ state, mult, onRetry, onPickTime }: { state: TransitState
                 </Pressable>
               ) : null}
               <Button
-                title="Bekijk reis"
+                title="Start reis"
                 icon="route"
-                variant="secondary"
                 style={{ marginTop: space.lg }}
                 onPress={() => {
                   setSelected(it);
-                  router.push('/journey');
+                  router.push('/trip');
                 }}
               />
             </>
@@ -460,7 +459,7 @@ function MoreOptions({ state }: { state: Extract<TransitState, { status: 'ok' }>
               key={o.itinerary.id}
               onPress={() => {
                 setSelected(o.itinerary);
-                router.push('/journey');
+                router.push('/trip');
               }}
               accessibilityRole="button"
               accessibilityLabel={`Vertrek ${formatNlClock(o.itinerary.departure)}, aankomst ${formatNlClock(o.itinerary.arrival)}, ${formatDuration(o.itinerary.durationMin)}, ${o.itinerary.transfers} overstappen, ${formatEuroCents(o.fare.finalCents)}`}

@@ -7,10 +7,10 @@ import { formatDuration, formatEuroCents } from '@/domain/format';
 import { formatNlClock } from '@/domain/nlTime';
 import { useApp } from '@/state/store';
 import { openDirections } from '@/services/maps';
-import { AppText, Button, Card, Header, Screen, SectionLabel } from '@/ui/components';
+import { AppText, Button, Card, Header, ListRow, Screen, SectionLabel } from '@/ui/components';
 import { Icon } from '@/ui/Icon';
 import { hasNsTrainInfo, nsTrainInfoAvailable } from '@/services/transit/nsTrainInfo';
-import { LegTimeline, NsTrainCard, TrainCard } from '@/ui/transit';
+import { LegTimeline, TrainCard } from '@/ui/transit';
 import { fonts, space, usePalette } from '@/ui/theme';
 
 export default function JourneyScreen() {
@@ -73,12 +73,20 @@ export default function JourneyScreen() {
 
       {nsTrains.length ? (
         <>
-          <SectionLabel>Treininfo</SectionLabel>
-          {nsTrains.map((leg, i) => (
-            <View key={i} style={{ marginTop: i === 0 ? -space.lg : 0 }}>
-              <NsTrainCard leg={leg} />
-            </View>
-          ))}
+          <SectionLabel>Treinen</SectionLabel>
+          <Card padded={false}>
+            {nsTrains.map((leg, i) => (
+              <ListRow
+                key={i}
+                first={i === 0}
+                icon="train"
+                title={`${leg.line ?? 'Trein'} ${leg.tripNumber ?? ''}`.trim()}
+                subtitle={`${leg.from.name} → ${leg.to.name} · ${formatNlClock(leg.departure)}`}
+                right={<AppText variant="callout" color={c.accent}>Voertuiginfo ›</AppText>}
+                onPress={() => router.push({ pathname: '/vehicle', params: { leg: String(itinerary.legs.indexOf(leg)) } })}
+              />
+            ))}
+          </Card>
         </>
       ) : longestTrain ? (
         <TrainCard leg={longestTrain} />

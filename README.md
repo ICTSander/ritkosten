@@ -129,11 +129,20 @@ the same as our tariff-unit calculation). The NS key adds live train details (cr
    For production deploy the same code as a Cloudflare Worker: `npx wrangler deploy proxy/ns-worker.mjs`.
 3. Put `EXPO_PUBLIC_API_BASE_URL=http://localhost:8787` (or your worker URL) in `.env` and restart `npm run web`.
 
+## Live trip ("Onderweg")
+
+`src/app/trip.tsx` + `src/domain/tripSteps.ts`: the journey becomes steps (vertrek → loop naar spoor 5 →
+stap in → uitstappen in … → je bent er) with a big countdown, a progress bar (`src/ui/TripProgress.tsx`),
+live NS delay/position for trains, the train image + "Voertuiginfo" (`src/app/vehicle.tsx`, facts from
+`src/data/train-types.json` with sources), foreground haptics and — after the user opts in — local
+notifications that vibrate 3 min before boarding, 2 min before getting off and at the stop (`src/services/tripAlerts.ts`).
+
 ## Train images
 
-NS's Virtual Train API exposes rolling-stock images, but they show the NS logo on every car (checked
-2026-09-28) and NS's API terms forbid using NS logos. We therefore draw our own train illustration, driven by
-the NS data (number of cars, double-deck or not). Switch to NS images only with written permission from NS.
+NS's Virtual Train API exposes rolling-stock images (also for Arriva). They show the NS logo on every car
+(checked 2026-09-28) and NS's API terms forbid using NS logos. At the owner's request the app shows them in the
+live trip and vehicle screens. **Before any public release, get written permission from NS** (contact form on
+the Ns-App product page) or switch back to the drawn illustration (`TrainCard`).
 
 ## Security & privacy
 

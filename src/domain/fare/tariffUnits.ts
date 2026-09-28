@@ -66,3 +66,9 @@ export function nsTariffUnits(from: { lat: number; lon: number }, to: { lat: num
 export function nearestStationCode(lat: number, lon: number, maxM = 800): string | undefined {
   return stationCode(nearestStationIndex(lat, lon, maxM));
 }
+
+/** Name of the station nearest to a point (e.g. a train's GPS position), within `maxM` metres. */
+export function nearestStationName(lat: number, lon: number, maxM = 2500): string | undefined {
+  const i = nearestStationIndex(lat, lon, maxM);
+  return i >= 0 ? stations[i].n[0] : undefined;
+}

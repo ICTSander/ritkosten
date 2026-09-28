@@ -1,0 +1,269 @@
+{
+ "researchedAt": "2026-09-28",
+ "note": "Feiten gecontroleerd op Wikipedia/nieuwsbronnen; per type bron-URL's.",
+ "types": [
+  {
+   "code": "VIRM",
+   "matchCodes": [
+    "VIRMM1",
+    "VIRMM",
+    "VIRM1",
+    "VIRM2",
+    "VIRM3",
+    "VIRM4",
+    "VIRM"
+   ],
+   "name": "Verlengd InterRegio Materieel (VIRM)",
+   "builder": "Talbot (DD-IRM) en Bombardier",
+   "inServiceSince": "1994",
+   "operators": [
+    "NS"
+   ],
+   "doubleDeck": true,
+   "maxSpeedKmh": 160,
+   "description": "Dubbeldeks intercity van NS, begonnen als DD-IRM in 1994. Tussen 2016 en 2020 gemoderniseerd tot VIRMm1 met ledverlichting en een nieuw interieur.",
+   "tag": "Klassiek",
+   "sourceUrls": [
+    "https://nl.wikipedia.org/wiki/VIRM"
+   ]
+  },
+  {
+   "code": "ICM",
+   "matchCodes": [
+    "ICMM",
+    "ICM"
+   ],
+   "name": "Intercitymaterieel (ICM, 'Koploper')",
+   "builder": "Talbot (mechanisch), CEM Oerlikon en Holec (elektrisch)",
+   "inServiceSince": "1983",
+   "operators": [
+    "NS"
+   ],
+   "doubleDeck": false,
+   "maxSpeedKmh": 160,
+   "description": "De 'Koploper', herkenbaar aan de hoge neus met doorloopkop. Sinds 2022 gaan de treinen uit dienst; in 2030 moeten ze allemaal weg zijn.",
+   "tag": "Klassiek",
+   "sourceUrls": [
+    "https://nl.wikipedia.org/wiki/Intercitymaterieel"
+   ]
+  },
+  {
+   "code": "ICNG",
+   "matchCodes": [
+    "ICNG"
+   ],
+   "name": "Intercity Nieuwe Generatie (ICNG)",
+   "builder": "Alstom (Coradia Stream)",
+   "inServiceSince": "2023",
+   "operators": [
+    "NS"
+   ],
+   "doubleDeck": false,
+   "maxSpeedKmh": 200,
+   "description": "Nieuwste intercity van NS (vanaf 19 april 2023), tot 200 km/u. Er zijn versies met 5 en 8 rijtuigen; de ICNG-B rijdt ook naar Brussel.",
+   "tag": "Modern",
+   "sourceUrls": [
+    "https://nl.wikipedia.org/wiki/Intercity_Nieuwe_Generatie"
+   ]
+  },
+  {
+   "code": "DDZ",
+   "matchCodes": [
+    "DDZ"
+   ],
+   "name": "Dubbeldekker Zonering (DDZ)",
+   "builder": "Talbot en Adtranz; verbouwd door NedTrain",
+   "inServiceSince": "2012",
+   "operators": [
+    "NS"
+   ],
+   "doubleDeck": true,
+   "maxSpeedKmh": 140,
+   "description": "Dubbeldekker uit de jaren '90, van 2009 tot 2014 omgebouwd. Het bovendek is ingericht voor lezen en werken.",
+   "tag": null,
+   "sourceUrls": [
+    "https://nl.wikipedia.org/wiki/DDZ"
+   ]
+  },
+  {
+   "code": "SLT",
+   "matchCodes": [
+    "SLT"
+   ],
+   "name": "Sprinter Lighttrain (SLT)",
+   "builder": "Bombardier en Siemens",
+   "inServiceSince": "2009",
+   "operators": [
+    "NS"
+   ],
+   "doubleDeck": false,
+   "maxSpeedKmh": 160,
+   "description": "Sprinter voor korte afstanden met een lage vloer. Er zijn versies met 4 rijtuigen (SLT-4) en 6 rijtuigen (SLT-6).",
+   "tag": null,
+   "sourceUrls": [
+    "https://nl.wikipedia.org/wiki/Sprinter_Lighttrain"
+   ]
+  },
+  {
+   "code": "SNG",
+   "matchCodes": [
+    "SNG"
+   ],
+   "name": "Sprinter Nieuwe Generatie (SNG)",
+   "builder": "CAF",
+   "inServiceSince": "2018",
+   "operators": [
+    "NS"
+   ],
+   "doubleDeck": false,
+   "maxSpeedKmh": 160,
+   "description": "Moderne sprinter van het Spaanse CAF, met brede doorgangen tussen de rijtuigen. Er zijn versies met 3 en 4 rijtuigen.",
+   "tag": "Modern",
+   "sourceUrls": [
+    "https://nl.wikipedia.org/wiki/Sprinter_Nieuwe_Generatie"
+   ]
+  },
+  {
+   "code": "FLIRT_NS",
+   "matchCodes": [
+    "FLIRTFFF",
+    "FLIRT3",
+    "FLIRT4"
+   ],
+   "name": "NS FLIRT",
+   "builder": "Stadler Rail",
+   "inServiceSince": "2016",
+   "operators": [
+    "NS"
+   ],
+   "doubleDeck": false,
+   "maxSpeedKmh": 160,
+   "description": "Sprinter van het Zwitserse Stadler, sinds december 2016. NS kocht hem snel om de reizigersgroei op te vangen. Er zijn versies met 3 en 4 rijtuigen.",
+   "tag": "Modern",
+   "sourceUrls": [
+    "https://nl.wikipedia.org/wiki/NS_FLIRT"
+   ]
+  },
+  {
+   "code": "FLIRT_ARR",
+   "matchCodes": [
+    "FLIRT2ARR",
+    "FLIRT3ARR",
+    "FLIRTARR"
+   ],
+   "name": "Arriva FLIRT",
+   "builder": "Stadler Rail",
+   "inServiceSince": "2016",
+   "operators": [
+    "Arriva"
+   ],
+   "doubleDeck": false,
+   "maxSpeedKmh": 160,
+   "description": "Elektrische stoptrein van Arriva in Limburg. Een deel kan ook in België en Duitsland rijden, als Drielandentrein Luik–Aken.",
+   "tag": "Modern",
+   "sourceUrls": [
+    "https://nl.wikipedia.org/wiki/Arriva_FLIRT"
+   ]
+  },
+  {
+   "code": "FLIRT",
+   "matchCodes": [
+    "FLIRT"
+   ],
+   "name": "Stadler FLIRT",
+   "builder": "Stadler Rail",
+   "inServiceSince": "2016",
+   "operators": [
+    "NS",
+    "Arriva",
+    "Keolis"
+   ],
+   "doubleDeck": false,
+   "maxSpeedKmh": null,
+   "description": "Elektrische trein van Stadler. Rijdt in Nederland bij NS, bij Arriva en bij Keolis (Blauwnet, Zwolle–Enschede en Zwolle–Kampen, sinds 2017).",
+   "tag": "Modern",
+   "sourceUrls": [
+    "https://nl.wikipedia.org/wiki/Stadler_FLIRT"
+   ]
+  },
+  {
+   "code": "GTW",
+   "matchCodes": [
+    "GTW"
+   ],
+   "name": "Stadler GTW ('Spurt')",
+   "builder": "Stadler Rail",
+   "inServiceSince": "2006",
+   "operators": [
+    "Arriva",
+    "Qbuzz"
+   ],
+   "doubleDeck": false,
+   "maxSpeedKmh": 140,
+   "description": "Regionale trein met een kort motordeel in het midden, als diesel- en als elektrische versie. Rijdt bij Arriva en bij Qbuzz op de MerwedeLingelijn.",
+   "tag": null,
+   "sourceUrls": [
+    "https://nl.wikipedia.org/wiki/Stadler_GTW"
+   ]
+  },
+  {
+   "code": "WINK",
+   "matchCodes": [
+    "WINK"
+   ],
+   "name": "Stadler WINK",
+   "builder": "Stadler Rail",
+   "inServiceSince": "2021",
+   "operators": [
+    "Arriva"
+   ],
+   "doubleDeck": false,
+   "maxSpeedKmh": 160,
+   "description": "Hybride trein van Arriva in Friesland en Groningen. Rijdt op HVO of diesel, heeft batterijen en kan ook onder de bovenleiding rijden.",
+   "tag": "Modern",
+   "sourceUrls": [
+    "https://nl.wikipedia.org/wiki/Stadler_WINK"
+   ]
+  },
+  {
+   "code": "ICE",
+   "matchCodes": [
+    "ICE"
+   ],
+   "name": "ICE 3neo (DB)",
+   "builder": "Siemens Mobility (Velaro)",
+   "inServiceSince": "2022",
+   "operators": [
+    "DB"
+   ],
+   "doubleDeck": false,
+   "maxSpeedKmh": 320,
+   "description": "Hogesnelheidstrein van Deutsche Bahn. Rijdt sinds juni 2024 tussen Amsterdam en Frankfurt en sinds november 2025 ook naar Berlijn.",
+   "tag": "Modern",
+   "sourceUrls": [
+    "https://en.wikipedia.org/wiki/Siemens_Velaro"
+   ]
+  },
+  {
+   "code": "E320",
+   "matchCodes": [
+    "EUROSTAR",
+    "E320",
+    "EST"
+   ],
+   "name": "Eurostar e320",
+   "builder": "Siemens Mobility",
+   "inServiceSince": "2015",
+   "operators": [
+    "Eurostar"
+   ],
+   "doubleDeck": false,
+   "maxSpeedKmh": 320,
+   "description": "Hogesnelheidstrein van Eurostar naar Londen, tot 320 km/u. Rijdt sinds april 2018 vanaf Amsterdam en Rotterdam.",
+   "tag": "Modern",
+   "sourceUrls": [
+    "https://en.wikipedia.org/wiki/British_Rail_Class_374"
+   ]
+  }
+ ]
+}

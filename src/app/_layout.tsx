@@ -48,6 +48,8 @@ export default function RootLayout() {
         <Stack.Screen name="when" />
         <Stack.Screen name="compare" />
         <Stack.Screen name="journey" />
+        <Stack.Screen name="trip" />
+        <Stack.Screen name="vehicle" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="ov-profile" />
         <Stack.Screen name="settings" />
       </Stack>

@@ -27,14 +27,37 @@ export interface NsTrainInfo {
   cancelled?: boolean;
   delayMin?: number;
   platformSections?: string;
+  /** One entry per coupled unit; `image` is NS's side-view drawing (shows the NS logo — see README). */
+  carriages?: { type?: string; image?: string; width?: number; height?: number }[];
   notes: string[];
+}
+
+export interface TrainPosition {
+  rit: string;
+  lat: number;
+  lon: number;
+  speedKmh: number;
+  at: string;
 }
 
 export const nsTrainInfoAvailable = () => !!apiBaseUrl();
 
-/** Only NS-operated trains with a known ride number have NS details. */
+/**
+ * Trains with a numeric ride number: NS's data also covers regional operators (Arriva, Keolis…),
+ * checked 2026-09-28 with an Arriva Flirt in Limburg.
+ */
 export function hasNsTrainInfo(leg: Leg): boolean {
-  return leg.mode === 'train' && /(^|\b)ns(\b|$)/i.test(leg.operator ?? '') && !!leg.tripNumber && /^\d+$/.test(leg.tripNumber);
+  return leg.mode === 'train' && !!leg.tripNumber && /^\d+$/.test(leg.tripNumber);
+}
+
+/** Live GPS position of a train (NS shares ~300 trains; refresh every ~15 s). */
+export function fetchTrainPosition(rit: string, signal?: AbortSignal): Promise<TrainPosition> {
+  return fetchJson<TrainPosition>(`${apiBaseUrl()}/ns/position?rit=${encodeURIComponent(rit)}`, {
+    provider: 'ns',
+    timeoutMs: 8_000,
+    retries: 0,
+    signal,
+  });
 }
 
 export async function fetchNsTrainInfo(leg: Leg, signal?: AbortSignal): Promise<NsTrainInfo> {

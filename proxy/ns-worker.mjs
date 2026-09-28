@@ -25,7 +25,9 @@
 const NS_TRIPS = 'https://gateway.apiportal.ns.nl/reisinformatie-api/api/v3/trips';
 const NS_JOURNEY = 'https://gateway.apiportal.ns.nl/reisinformatie-api/api/v2/journey';
 const NS_VIRTUAL_TRAIN = 'https://gateway.apiportal.ns.nl/virtual-train-api/api/v1/trein';
+const NS_VEHICLES = 'https://gateway.apiportal.ns.nl/virtual-train-api/api/vehicle';
 const DOUBLE_DECK = /^(VIRM|DDZ|DDAR|DD-AR|MDDM|NID)/i;
+const ALLOWED_IMAGE_HOST = 'https://vt.ns-mlab.nl/';
 const FACILITY_ORDER = ['WIFI', 'STROOM', 'STILTE', 'TOILET', 'FIETS', 'TOEGANKELIJK'];
 
 async function nsGet(url, env) {
@@ -38,7 +40,8 @@ async function nsGet(url, env) {
  * Train details for one NS ride (ritnummer), seen from the boarding station:
  * crowding, rolling stock, seats, facilities, "shorter train" and NS notes.
  * Combines Reisinformatie /v2/journey and the Virtual Train API. Partial data is fine.
- * NS train IMAGES are deliberately not passed on: they show the NS logo, which the NS API terms forbid us to use.
+ * Train images (vt.ns-mlab.nl) are passed on because the app owner asked for them. NOTE: they show the
+ * NS logo and the NS API terms forbid using NS logos — get written permission from NS before a public release.
  */
 async function trainInfo(q, env) {
   const rit = (q.get('rit') || '').replace(/\D/g, '');
@@ -85,7 +88,15 @@ async function trainInfo(q, env) {
     let first = 0;
     let second = 0;
     let bikes = 0;
+    out.parts = v.lengte || out.parts;
+    out.carriages = [];
     for (const m of v.materieeldelen || []) {
+      out.carriages.push({
+        type: m.type,
+        image: typeof m.afbeelding === 'string' && m.afbeelding.startsWith(ALLOWED_IMAGE_HOST) ? m.afbeelding : undefined,
+        width: m.breedte,
+        height: m.hoogte,
+      });
       const z = m.zitplaatsen || {};
       first += (z.zitplaatsEersteKlas || 0) + (z.klapstoelEersteKlas || 0);
       second += (z.zitplaatsTweedeKlas || 0) + (z.klapstoelTweedeKlas || 0);
@@ -168,12 +179,30 @@ function mapTrip(t, i) {
   };
 }
 
+// Positions of all ~300 NS-tracked trains, shared for 10 s (one NS call serves every client).
+let positions = { at: 0, data: null };
+
+async function trainPosition(q, env) {
+  const rit = (q.get('rit') || '').replace(/\D/g, '');
+  if (!rit) return cors(JSON.stringify({ error: 'rit required' }), 400);
+  if (!positions.data || Date.now() - positions.at > 10_000) {
+    const all = await nsGet(NS_VEHICLES, env);
+    positions = { at: Date.now(), data: (all.payload && all.payload.treinen) || [] };
+  }
+  const t = positions.data.find((x) => String(x.treinNummer) === rit || String(x.ritId) === rit);
+  if (!t) return cors(JSON.stringify({ error: 'no position' }), 404, { 'Cache-Control': 'no-store' });
+  return cors(JSON.stringify({ rit, lat: t.lat, lon: t.lng, speedKmh: Math.round(t.snelheid || 0), heading: t.richting, at: new Date(positions.at).toISOString() }), 200, {
+    'Cache-Control': 'public, max-age=10',
+  });
+}
+
 export default {
   async fetch(request, env) {
     if (request.method === 'OPTIONS') return cors(null, 204, { 'Access-Control-Allow-Methods': 'GET' });
     const url = new URL(request.url);
     if (!env.NS_API_KEY) return cors(JSON.stringify({ error: 'NS_API_KEY not configured' }), 503);
     if (url.pathname === '/ns/train') return trainInfo(url.searchParams, env);
+    if (url.pathname === '/ns/position') return trainPosition(url.searchParams, env);
     if (url.pathname !== '/ns/trips') return cors(JSON.stringify({ error: 'not found' }), 404);
 
     const q = url.searchParams;

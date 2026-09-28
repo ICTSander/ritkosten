@@ -84,10 +84,11 @@ describe('provider registry', () => {
     expect(allTransitProviders().map((p) => p.id)).toEqual(['9292', 'transitous']);
   });
 
-  it('only NS trains with a ride number get NS train info', () => {
+  it('trains with a ride number get NS train info', () => {
     const base = { mode: 'train', operator: 'NS', tripNumber: '3964' } as never;
     expect(hasNsTrainInfo(base)).toBe(true);
-    expect(hasNsTrainInfo({ ...(base as object), operator: 'Arriva' } as never)).toBe(false);
+    expect(hasNsTrainInfo({ ...(base as object), operator: 'Arriva' } as never)).toBe(true); // NS data covers Arriva too
+    expect(hasNsTrainInfo({ ...(base as object), mode: 'bus' } as never)).toBe(false);
     expect(hasNsTrainInfo({ ...(base as object), tripNumber: undefined } as never)).toBe(false);
   });
 
