@@ -12,6 +12,7 @@ import { Icon } from '@/ui/Icon';
 import { consumptionSource, consumptionText, FUEL_LABEL, perUnit, unitWord, vehicleSubtitle, vehicleTitle } from '@/ui/labels';
 import { NumberStepper } from '@/ui/NumberStepper';
 import { productFor } from '@/domain/fare/products';
+import { nsTrainInfoAvailable } from '@/services/transit/nsTrainInfo';
 import { allTransitProviders } from '@/services/transit/registry';
 import { space, usePalette } from '@/ui/theme';
 
@@ -204,12 +205,18 @@ export default function Settings() {
 
       <SectionLabel>OV-databronnen</SectionLabel>
       <Card padded={false}>
-        {allTransitProviders().map((p, i) => {
+        <ListRow
+          first
+          icon="train"
+          title="NS-treininfo"
+          subtitle={nsTrainInfoAvailable() ? 'Actief: drukte, treintype, zitplaatsen, faciliteiten' : 'Niet ingesteld (NS-key op de proxy nodig)'}
+          right={<Icon name={nsTrainInfoAvailable() ? 'checkCircle' : 'info'} size={18} color={nsTrainInfoAvailable() ? c.success : c.textTertiary} />}
+        />
+        {allTransitProviders().map((p) => {
           const a = p.availability();
           return (
             <ListRow
               key={p.id}
-              first={i === 0}
               icon="transit"
               title={p.label}
               subtitle={a.status === 'available' ? 'Actief' : a.message}

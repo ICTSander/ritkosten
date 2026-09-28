@@ -4,6 +4,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { formatDuration } from '../domain/format';
 import { formatNlClock } from '../domain/nlTime';
 import { type Leg, type LegMode, minutesBetween, type TransitItinerary } from '../domain/transit';
+import { type Crowd, fetchNsTrainInfo } from '../services/transit/nsTrainInfo';
+import { useAsyncResource } from '../state/hooks';
 import { AppText } from './components';
 import { Icon, type IconName } from './Icon';
 import { fonts, radius, space, useModeColors, usePalette } from './theme';
@@ -283,18 +285,13 @@ function RideRow({ leg, fromName, toName, color }: { leg: Leg; fromName: string;
   );
 }
 
-/**
- * Generic train illustration (our own drawing — no NS photos or logos, whose use in third-party
- * apps is not clearly permitted). Double-deck for Intercity, single-deck otherwise.
- */
-export function TrainCard({ leg }: { leg: Leg }) {
-  const c = usePalette();
+/** Side-view train drawing (our own — NS images carry the NS logo, which we may not use). */
+function TrainArt({ parts, doubleDeck }: { parts: number; doubleDeck: boolean }) {
   const colors = useModeColors().train;
-  const doubleDeck = /intercity|^ic/i.test(leg.line ?? '');
-  const cars = 3;
+  const cars = Math.max(2, Math.min(parts, 8));
   return (
-    <View style={[styles.trainCard, { backgroundColor: c.surfaceMuted }]}>
-      <View style={styles.trainArt} accessibilityElementsHidden importantForAccessibility="no">
+    <View accessibilityElementsHidden importantForAccessibility="no">
+      <View style={styles.trainArt}>
         {Array.from({ length: cars }, (_, i) => (
           <View
             key={i}
@@ -306,7 +303,7 @@ export function TrainCard({ leg }: { leg: Leg }) {
             ]}>
             {Array.from({ length: doubleDeck ? 2 : 1 }, (_, row) => (
               <View key={row} style={styles.windows}>
-                {Array.from({ length: 4 }, (_, w) => (
+                {Array.from({ length: cars > 5 ? 2 : 4 }, (_, w) => (
                   <View key={w} style={[styles.window, { backgroundColor: colors.line, opacity: 0.35 }]} />
                 ))}
               </View>
@@ -315,6 +312,16 @@ export function TrainCard({ leg }: { leg: Leg }) {
         ))}
       </View>
       <View style={[styles.track, { backgroundColor: colors.line }]} />
+    </View>
+  );
+}
+
+/** Generic card when no NS details are available. */
+export function TrainCard({ leg }: { leg: Leg }) {
+  const c = usePalette();
+  return (
+    <View style={[styles.trainCard, { backgroundColor: c.surfaceMuted }]}>
+      <TrainArt parts={3} doubleDeck={/intercity|^ic/i.test(leg.line ?? '')} />
       <AppText variant="headline" style={{ marginTop: space.md }}>
         {leg.line ?? 'Trein'}
         {leg.operator ? ` · ${leg.operator}` : ''}
@@ -325,6 +332,113 @@ export function TrainCard({ leg }: { leg: Leg }) {
       <AppText variant="caption" color={c.textTertiary} style={{ marginTop: 4 }}>
         Illustratie
       </AppText>
+    </View>
+  );
+}
+
+const FACILITY_LABEL: Record<string, string> = {
+  WIFI: 'Wifi',
+  STROOM: 'Stopcontact',
+  STILTE: 'Stiltecoupé',
+  TOILET: 'Toilet',
+  FIETS: 'Fietsplek',
+  TOEGANKELIJK: 'Toegankelijk',
+};
+
+const CROWD: Record<Crowd, { label: string; tone: 'success' | 'warning' | 'error'; bars: number }> = {
+  LOW: { label: 'Rustig', tone: 'success', bars: 1 },
+  MEDIUM: { label: 'Gemiddeld druk', tone: 'warning', bars: 2 },
+  HIGH: { label: 'Druk', tone: 'error', bars: 3 },
+};
+
+/** Live NS details for one NS train ride: crowding, rolling stock, seats, facilities, notes. */
+export function NsTrainCard({ leg }: { leg: Leg }) {
+  const c = usePalette();
+  const rit = leg.tripNumber ?? '';
+  const planned = leg.plannedDeparture;
+  const info = useAsyncResource(rit ? `${rit}|${planned}` : null, (signal) => fetchNsTrainInfo(leg, signal));
+  const data = info.status === 'ok' ? info.data : null;
+  const crowd = data?.crowd ? CROWD[data.crowd] : null;
+  const toneColor = crowd ? c[crowd.tone] : c.textSecondary;
+
+  return (
+    <View style={[styles.trainCard, { backgroundColor: c.surfaceMuted, gap: space.sm }]}>
+      <View style={styles.rideMeta}>
+        <ModeBadge leg={leg} />
+        <AppText variant="headline" style={{ flex: 1 }} numberOfLines={1}>
+          {data?.category ?? leg.line ?? 'Trein'} {rit}
+        </AppText>
+      </View>
+      <AppText variant="footnote" color={c.textSecondary}>
+        {leg.from.name} → {leg.to.name} · {formatNlClock(leg.departure)} → {formatNlClock(leg.arrival)}
+      </AppText>
+
+      <TrainArt parts={data?.parts ?? 3} doubleDeck={data?.doubleDeck ?? /intercity|^ic/i.test(leg.line ?? '')} />
+
+      {info.status === 'loading' ? (
+        <AppText variant="footnote" color={c.textSecondary}>
+          Treininfo ophalen bij NS…
+        </AppText>
+      ) : info.status === 'error' ? (
+        <AppText variant="footnote" color={c.textSecondary}>
+          Treininfo van NS is nu niet beschikbaar.
+        </AppText>
+      ) : data ? (
+        <>
+          {crowd ? (
+            <View style={styles.infoRow} accessible accessibilityLabel={`Verwachte drukte bij instappen: ${crowd.label}`}>
+              <View style={styles.bars}>
+                {[1, 2, 3].map((b) => (
+                  <View key={b} style={[styles.bar, { height: 5 + b * 4, backgroundColor: b <= crowd.bars ? toneColor : c.separator }]} />
+                ))}
+              </View>
+              <AppText variant="callout">
+                {crowd.label}
+                <AppText variant="footnote" color={c.textSecondary}>
+                  {' '}
+                  · verwachte drukte bij instappen
+                </AppText>
+              </AppText>
+            </View>
+          ) : null}
+          {data.trainType || data.parts ? (
+            <AppText variant="callout">
+              {[data.trainType, data.parts ? `${data.parts} bakken` : undefined, data.lengthM ? `${data.lengthM} m` : undefined]
+                .filter(Boolean)
+                .join(' · ')}
+            </AppText>
+          ) : null}
+          {data.seatsSecond || data.seats ? (
+            <AppText variant="callout">
+              {data.seatsSecond ? `${data.seatsSecond} zitplaatsen 2e klas · ${data.seatsFirst ?? 0} 1e klas` : `${data.seats} zitplaatsen`}
+              {data.bikeSpots ? ` · ${data.bikeSpots} fietsplekken` : ''}
+            </AppText>
+          ) : null}
+          {data.shortened ? (
+            <View style={[styles.transferWarn, { backgroundColor: c.warningSoft, marginLeft: 0, marginBottom: 0 }]}>
+              <Icon name="warning" size={14} color={c.warning} />
+              <AppText variant="footnote">Kortere trein dan normaal</AppText>
+            </View>
+          ) : null}
+          {data.facilities.length ? (
+            <View style={styles.facilities}>
+              {data.facilities.map((f) => (
+                <View key={f} style={[styles.facility, { borderColor: c.separator, backgroundColor: c.surface }]}>
+                  <AppText variant="caption">{FACILITY_LABEL[f] ?? f}</AppText>
+                </View>
+              ))}
+            </View>
+          ) : null}
+          {data.notes.map((n, i) => (
+            <AppText key={i} variant="footnote" color={c.warning}>
+              {n}
+            </AppText>
+          ))}
+          <AppText variant="caption" color={c.textTertiary}>
+            Treininfo: NS (verwachting, kan wijzigen) · tekening: illustratie
+          </AppText>
+        </>
+      ) : null}
     </View>
   );
 }
@@ -349,6 +463,11 @@ const styles = StyleSheet.create({
   platform: { minWidth: 28, height: 24, paddingHorizontal: 6, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
   transferWarn: { flexDirection: 'row', alignItems: 'center', gap: 6, padding: space.sm, borderRadius: 10, marginLeft: 80, marginBottom: space.sm },
   trainCard: { borderRadius: radius.card, padding: space.lg, marginTop: space.xl },
+  infoRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 2, height: 17 },
+  bar: { width: 5, borderRadius: 2 },
+  facilities: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  facility: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, borderWidth: StyleSheet.hairlineWidth },
   trainArt: { flexDirection: 'row', gap: 4, alignItems: 'flex-end', height: 48 },
   car: { flex: 1, borderWidth: 2, borderRadius: 6, justifyContent: 'space-evenly', paddingHorizontal: 6 },
   windows: { flexDirection: 'row', gap: 4 },

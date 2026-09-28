@@ -2,18 +2,18 @@
  * Chooses the public transport provider. The UI only talks to `PublicTransportProvider`,
  * so 9292 / NS / Transitous can be swapped without touching screens.
  *
- * Order: 9292 (needs licence) → NS via our proxy (needs NS key on a server) → Transitous (free).
- * Unavailable providers report a status; they never return made-up data.
+ * Order: 9292 (needs licence) → Transitous (free, door-to-door).
+ * NS is NOT a planner here: a free NS key may not plan door-to-door trips, so NS is used only for
+ * train details (see nsTrainInfo.ts). Unavailable providers report a status; never made-up data.
  */
 import { AppError, isAbort } from '../http';
 import { mockTransit } from './mock';
 import { ninetwoninetwo } from './ninetwoninetwo';
-import { nsProxy } from './ns';
 import { transitous } from './transitous';
 import type { PublicTransportProvider } from './types';
 
 export function allTransitProviders(): PublicTransportProvider[] {
-  const list: PublicTransportProvider[] = [ninetwoninetwo, nsProxy, transitous];
+  const list: PublicTransportProvider[] = [ninetwoninetwo, transitous];
   // Development only, behind an explicit flag — never in a production build.
   if (process.env.EXPO_PUBLIC_TRANSIT_MOCK === '1' && typeof __DEV__ !== 'undefined' && __DEV__) list.unshift(mockTransit);
   return list;

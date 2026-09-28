@@ -61,3 +61,8 @@ export function unitsBetween(i: number, j: number): number | undefined {
 export function nsTariffUnits(from: { lat: number; lon: number }, to: { lat: number; lon: number }): number | undefined {
   return unitsBetween(nearestStationIndex(from.lat, from.lon), nearestStationIndex(to.lat, to.lon));
 }
+
+/** NS station code (e.g. "HRL") of the station nearest to a point, within `maxM` metres. */
+export function nearestStationCode(lat: number, lon: number, maxM = 800): string | undefined {
+  return stationCode(nearestStationIndex(lat, lon, maxM));
+}

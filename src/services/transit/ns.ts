@@ -24,6 +24,7 @@ export const nsProxy: PublicTransportProvider = {
     apiBaseUrl()
       ? { status: 'available' }
       : { status: 'unavailable', reason: 'no-proxy', message: 'NS-koppeling niet ingesteld (server met NS-key nodig).' },
+  // Not used for planning (free keys can't plan door-to-door); kept for a future paid/partner key.
   async plan(from: LatLon, to: LatLon, time: TimeQuery, opts = {}) {
     const params = new URLSearchParams({
       fromLat: String(from.lat),

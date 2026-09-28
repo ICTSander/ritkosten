@@ -3,7 +3,8 @@ import { AppError } from '../http';
 import { ninetwoninetwo } from '../transit/ninetwoninetwo';
 import { nsProxy } from '../transit/ns';
 import { decodePolyline, polylineLengthM } from '../transit/polyline';
-import { withTransitProvider } from '../transit/registry';
+import { allTransitProviders, withTransitProvider } from '../transit/registry';
+import { hasNsTrainInfo } from '../transit/nsTrainInfo';
 import { mapMotisItinerary, mapMotisMode, transitous } from '../transit/transitous';
 import type { PublicTransportProvider } from '../transit/types';
 import fixture from './fixtures/transitous-heerlen-amsterdam.json';
@@ -77,6 +78,17 @@ describe('provider registry', () => {
   it('9292 reports licence required and never returns data', async () => {
     expect(ninetwoninetwo.availability()).toMatchObject({ status: 'unavailable', reason: 'no-licence' });
     await expect(ninetwoninetwo.plan({ lat: 0, lon: 0 }, { lat: 0, lon: 0 }, { kind: 'now' })).rejects.toBeInstanceOf(AppError);
+  });
+
+  it('never plans with NS (free keys cannot plan door-to-door)', () => {
+    expect(allTransitProviders().map((p) => p.id)).toEqual(['9292', 'transitous']);
+  });
+
+  it('only NS trains with a ride number get NS train info', () => {
+    const base = { mode: 'train', operator: 'NS', tripNumber: '3964' } as never;
+    expect(hasNsTrainInfo(base)).toBe(true);
+    expect(hasNsTrainInfo({ ...(base as object), operator: 'Arriva' } as never)).toBe(false);
+    expect(hasNsTrainInfo({ ...(base as object), tripNumber: undefined } as never)).toBe(false);
   });
 
   it('NS is unavailable without a proxy URL', () => {

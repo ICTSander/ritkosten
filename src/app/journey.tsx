@@ -9,7 +9,8 @@ import { useApp } from '@/state/store';
 import { openDirections } from '@/services/maps';
 import { AppText, Button, Card, Header, Screen, SectionLabel } from '@/ui/components';
 import { Icon } from '@/ui/Icon';
-import { LegTimeline, TrainCard } from '@/ui/transit';
+import { hasNsTrainInfo, nsTrainInfoAvailable } from '@/services/transit/nsTrainInfo';
+import { LegTimeline, NsTrainCard, TrainCard } from '@/ui/transit';
 import { fonts, space, usePalette } from '@/ui/theme';
 
 export default function JourneyScreen() {
@@ -24,7 +25,9 @@ export default function JourneyScreen() {
 
   const fare = calculatePublicTransportCost(itinerary, profile, FARE_DATA_2026);
   const trains = itinerary.legs.filter((l) => l.mode === 'train');
-  const longestTrain = trains.sort((a, b) => b.durationMin - a.durationMin)[0];
+  // Live NS details (crowding, stock, seats…) for every NS train, when the NS proxy is set up.
+  const nsTrains = nsTrainInfoAvailable() ? trains.filter(hasNsTrainInfo) : [];
+  const longestTrain = [...trains].sort((a, b) => b.durationMin - a.durationMin)[0];
   const startLabel = startMode === 'device' ? 'Huidige locatie' : (manualStart?.label ?? 'Start');
   const delays = itinerary.legs.filter((l) => (l.delayMin ?? 0) > 0 || l.cancelled);
 
@@ -68,7 +71,18 @@ export default function JourneyScreen() {
         <LegTimeline itinerary={itinerary} startLabel={startLabel} destinationLabel={destination.label} />
       </View>
 
-      {longestTrain ? <TrainCard leg={longestTrain} /> : null}
+      {nsTrains.length ? (
+        <>
+          <SectionLabel>Treininfo</SectionLabel>
+          {nsTrains.map((leg, i) => (
+            <View key={i} style={{ marginTop: i === 0 ? -space.lg : 0 }}>
+              <NsTrainCard leg={leg} />
+            </View>
+          ))}
+        </>
+      ) : longestTrain ? (
+        <TrainCard leg={longestTrain} />
+      ) : null}
 
       <SectionLabel>Prijs</SectionLabel>
       <Card style={{ gap: space.md }}>
