@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "ritkosten",
+    "name": "Ritkosten",
     "slug": "ritkosten",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -8,19 +8,26 @@
     "scheme": "ritkosten",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Ritkosten gebruikt je locatie alleen om de route vanaf waar je nu bent te berekenen. Je locatie wordt niet bewaard."
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#0A5BB0",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
-      "output": "static",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
@@ -28,9 +35,15 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#0A5BB0",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Ritkosten gebruikt je locatie alleen om de route vanaf waar je nu bent te berekenen. Je locatie wordt niet bewaard."
         }
       ]
     ],

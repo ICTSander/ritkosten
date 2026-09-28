@@ -1,0 +1,518 @@
+{
+ "source": "RDW Open Data m9d7-ebf2",
+ "generatedAt": "2026-09-28T07:46:20.721Z",
+ "makes": [
+  {
+   "rdw": "VOLKSWAGEN",
+   "count": 1112165
+  },
+  {
+   "rdw": "TOYOTA",
+   "count": 702711
+  },
+  {
+   "rdw": "RENAULT",
+   "count": 602217
+  },
+  {
+   "rdw": "PEUGEOT",
+   "count": 590949
+  },
+  {
+   "rdw": "FORD",
+   "count": 567841
+  },
+  {
+   "rdw": "OPEL",
+   "count": 559434
+  },
+  {
+   "rdw": "KIA",
+   "count": 504727
+  },
+  {
+   "rdw": "BMW",
+   "count": 443827
+  },
+  {
+   "rdw": "AUDI",
+   "count": 403132
+  },
+  {
+   "rdw": "VOLVO",
+   "count": 391444
+  },
+  {
+   "rdw": "MERCEDES-BENZ",
+   "count": 385839
+  },
+  {
+   "rdw": "HYUNDAI",
+   "count": 351191
+  },
+  {
+   "rdw": "CITROEN",
+   "count": 330970
+  },
+  {
+   "rdw": "SKODA",
+   "count": 308794
+  },
+  {
+   "rdw": "FIAT",
+   "count": 272841
+  },
+  {
+   "rdw": "SUZUKI",
+   "count": 263683
+  },
+  {
+   "rdw": "NISSAN",
+   "count": 240239
+  },
+  {
+   "rdw": "SEAT",
+   "count": 220137
+  },
+  {
+   "rdw": "MAZDA",
+   "count": 181411
+  },
+  {
+   "rdw": "MINI",
+   "count": 146804
+  },
+  {
+   "rdw": "TESLA",
+   "count": 134897
+  },
+  {
+   "rdw": "MITSUBISHI",
+   "count": 125168
+  },
+  {
+   "rdw": "DACIA",
+   "count": 88201
+  },
+  {
+   "rdw": "HONDA",
+   "count": 59374
+  },
+  {
+   "rdw": "LAND ROVER",
+   "count": 46627
+  },
+  {
+   "rdw": "PORSCHE",
+   "count": 46493
+  },
+  {
+   "rdw": "CHEVROLET",
+   "count": 42997
+  },
+  {
+   "rdw": "LYNK&CO",
+   "count": 37570
+  },
+  {
+   "rdw": "ALFA ROMEO",
+   "count": 34539
+  },
+  {
+   "rdw": "CUPRA",
+   "count": 33770
+  },
+  {
+   "rdw": "DAIHATSU",
+   "count": 31732
+  },
+  {
+   "rdw": "LEXUS",
+   "count": 29629
+  },
+  {
+   "rdw": "JEEP",
+   "count": 29021
+  },
+  {
+   "rdw": "MG",
+   "count": 23868
+  },
+  {
+   "rdw": "SUBARU",
+   "count": 17503
+  },
+  {
+   "rdw": "BYD",
+   "count": 17257
+  },
+  {
+   "rdw": "POLESTAR",
+   "count": 17214
+  },
+  {
+   "rdw": "SMART",
+   "count": 16143
+  },
+  {
+   "rdw": "SAAB",
+   "count": 12742
+  },
+  {
+   "rdw": "HYMER",
+   "count": 12022
+  },
+  {
+   "rdw": "JAGUAR",
+   "count": 11709
+  },
+  {
+   "rdw": "BMW I",
+   "count": 9666
+  },
+  {
+   "rdw": "DS",
+   "count": 9585
+  },
+  {
+   "rdw": "ADRIA",
+   "count": 8332
+  },
+  {
+   "rdw": "BUERSTNER",
+   "count": 7139
+  },
+  {
+   "rdw": "KNAUS",
+   "count": 6784
+  },
+  {
+   "rdw": "CAPRON",
+   "count": 6783
+  },
+  {
+   "rdw": "LANCIA",
+   "count": 6236
+  },
+  {
+   "rdw": "DETHLEFFS",
+   "count": 6125
+  },
+  {
+   "rdw": "TESLA MOTORS",
+   "count": 5255
+  },
+  {
+   "rdw": "POESSL",
+   "count": 5057
+  },
+  {
+   "rdw": "CHRYSLER",
+   "count": 4706
+  },
+  {
+   "rdw": "VW",
+   "count": 4574
+  },
+  {
+   "rdw": "LEAPMOTOR",
+   "count": 4366
+  },
+  {
+   "rdw": "CHAUSSON",
+   "count": 4103
+  },
+  {
+   "rdw": "XPENG",
+   "count": 4093
+  },
+  {
+   "rdw": "CARTHAGO",
+   "count": 4030
+  },
+  {
+   "rdw": "ZEEKR",
+   "count": 4004
+  },
+  {
+   "rdw": "FORD-CNG-TECHNIK",
+   "count": 3937
+  },
+  {
+   "rdw": "MERCEDES-AMG",
+   "count": 3736
+  },
+  {
+   "rdw": "WEINSBERG",
+   "count": 2929
+  },
+  {
+   "rdw": "ADRIA MOBIL",
+   "count": 2865
+  },
+  {
+   "rdw": "JAECOO",
+   "count": 2749
+  },
+  {
+   "rdw": "DODGE",
+   "count": 2704
+  },
+  {
+   "rdw": "FERRARI",
+   "count": 2617
+  },
+  {
+   "rdw": "BENTLEY",
+   "count": 2352
+  },
+  {
+   "rdw": "MASERATI",
+   "count": 2280
+  },
+  {
+   "rdw": "MC LOUIS",
+   "count": 1931
+  },
+  {
+   "rdw": "LMC",
+   "count": 1924
+  },
+  {
+   "rdw": "RAPIDO",
+   "count": 1875
+  },
+  {
+   "rdw": "CHALLENGER",
+   "count": 1866
+  },
+  {
+   "rdw": "ASTON MARTIN",
+   "count": 1711
+  },
+  {
+   "rdw": "WESTFALIA",
+   "count": 1605
+  },
+  {
+   "rdw": "HOBBY",
+   "count": 1483
+  },
+  {
+   "rdw": "BURSTNER GMBH",
+   "count": 1349
+  },
+  {
+   "rdw": "JAGUAR LAND ROVER",
+   "count": 1332
+  },
+  {
+   "rdw": "JAGUAR CARS",
+   "count": 1296
+  },
+  {
+   "rdw": "OMODA",
+   "count": 1153
+  },
+  {
+   "rdw": "BENIMAR",
+   "count": 1142
+  },
+  {
+   "rdw": "ROLLER TEAM",
+   "count": 1075
+  },
+  {
+   "rdw": "QUATTRO",
+   "count": 967
+  },
+  {
+   "rdw": "EURA MOBIL",
+   "count": 955
+  },
+  {
+   "rdw": "NIO",
+   "count": 936
+  },
+  {
+   "rdw": "CADILLAC",
+   "count": 906
+  },
+  {
+   "rdw": "PILOTE",
+   "count": 898
+  },
+  {
+   "rdw": "INFINITI",
+   "count": 835
+  },
+  {
+   "rdw": "ALPINE",
+   "count": 828
+  },
+  {
+   "rdw": "SUN LIVING",
+   "count": 820
+  },
+  {
+   "rdw": "AIWAYS",
+   "count": 816
+  },
+  {
+   "rdw": "KARMANN MOBIL",
+   "count": 800
+  },
+  {
+   "rdw": "DONGFENG",
+   "count": 777
+  },
+  {
+   "rdw": "LAIKA CARAVANS S.P.A.",
+   "count": 764
+  },
+  {
+   "rdw": "TRIGANO",
+   "count": 717
+  },
+  {
+   "rdw": "LOTUS",
+   "count": 707
+  },
+  {
+   "rdw": "IVECO",
+   "count": 688
+  },
+  {
+   "rdw": "LAMBORGHINI",
+   "count": 674
+  },
+  {
+   "rdw": "RIMOR",
+   "count": 615
+  },
+  {
+   "rdw": "SSANGYONG",
+   "count": 604
+  },
+  {
+   "rdw": "ALPINA",
+   "count": 591
+  },
+  {
+   "rdw": "ELNAGH",
+   "count": 563
+  },
+  {
+   "rdw": "GEELY",
+   "count": 559
+  },
+  {
+   "rdw": "NIESMANN-BISCHOFF",
+   "count": 500
+  },
+  {
+   "rdw": "POSSL",
+   "count": 450
+  },
+  {
+   "rdw": "TEC",
+   "count": 422
+  },
+  {
+   "rdw": "MOBILVETTA",
+   "count": 408
+  },
+  {
+   "rdw": "LAIKA",
+   "count": 374
+  },
+  {
+   "rdw": "TOTH ES FIAI",
+   "count": 373
+  },
+  {
+   "rdw": "VINFAST",
+   "count": 364
+  },
+  {
+   "rdw": "DS AUTOMOBILES",
+   "count": 353
+  },
+  {
+   "rdw": "AUTOMOBILI LAMBORGHINI S.",
+   "count": 342
+  },
+  {
+   "rdw": "DAIMLERCHRYSLER AG",
+   "count": 339
+  },
+  {
+   "rdw": "ETRUSCO",
+   "count": 319
+  },
+  {
+   "rdw": "MC LOUIS SPA",
+   "count": 318
+  },
+  {
+   "rdw": "FRANKIA",
+   "count": 293
+  },
+  {
+   "rdw": "ABARTH",
+   "count": 278
+  },
+  {
+   "rdw": "GIOTTILINE",
+   "count": 262
+  },
+  {
+   "rdw": "ROLLS ROYCE",
+   "count": 261
+  },
+  {
+   "rdw": "MC LAREN",
+   "count": 253
+  },
+  {
+   "rdw": "ROVER",
+   "count": 252
+  },
+  {
+   "rdw": "CONCORDE",
+   "count": 243
+  },
+  {
+   "rdw": "KNAUS TABBERT",
+   "count": 231
+  },
+  {
+   "rdw": "JOINT",
+   "count": 230
+  },
+  {
+   "rdw": "BAVARIA",
+   "count": 217
+  },
+  {
+   "rdw": "MORGAN",
+   "count": 211
+  },
+  {
+   "rdw": "LUCID MOTORS",
+   "count": 208
+  },
+  {
+   "rdw": "LADA",
+   "count": 207
+  },
+  {
+   "rdw": "AUTOSTAR",
+   "count": 204
+  },
+  {
+   "rdw": "ITINEO",
+   "count": 201
+  }
+ ]
+}

@@ -1,0 +1,105 @@
+import { useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
+
+import { formatNlClock, nlLocalToIso, toNlLocal } from '../domain/nlTime';
+import type { TimeQuery } from '../domain/transit';
+import { AppText, Button, Chip, Segmented } from './components';
+import { fonts, radius, space, usePalette } from './theme';
+
+const DAYS = ['zo', 'ma', 'di', 'wo', 'do', 'vr', 'za'];
+
+export function timeQueryLabel(q: TimeQuery): string {
+  if (q.kind === 'now') return 'Vertrek nu';
+  const t = toNlLocal(q.at);
+  const today = toNlLocal(Date.now());
+  const sameDay = t.year === today.year && t.month === today.month && t.day === today.day;
+  const day = sameDay ? '' : `${DAYS[t.weekday]} ${t.day}-${t.month} `;
+  return `${q.kind === 'depart' ? 'Vertrek' : 'Aankomst'} ${day}${formatNlClock(q.at)}`;
+}
+
+/** Compact picker: now / depart at / arrive at, a day chip row and a 5-minute stepper. No native module needed. */
+export function TimePicker({ value, onDone }: { value: TimeQuery; onDone: (q: TimeQuery) => void }) {
+  const c = usePalette();
+  const [kind, setKind] = useState<TimeQuery['kind']>(value.kind);
+  const [initial] = useState(() => (value.kind === 'now' ? roundUp5(Date.now()) : Date.parse(value.at)));
+  const [dayOffset, setDayOffset] = useState(() => dayDiff(initial));
+  const [minutes, setMinutes] = useState(() => toNlLocal(initial).minutes);
+  const [today] = useState(() => toNlLocal(Date.now()));
+
+  const bump = (delta: number) => setMinutes((m) => (m + delta + 1440) % 1440);
+  const iso = () => {
+    // Local midnight of today + dayOffset, then the chosen clock time.
+    const base = Date.UTC(today.year, today.month - 1, today.day + dayOffset, 12);
+    const d = new Date(base);
+    return nlLocalToIso(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate(), Math.floor(minutes / 60), minutes % 60);
+  };
+
+  return (
+    <View style={{ gap: space.lg }}>
+      <Segmented
+        value={kind}
+        onChange={setKind}
+        options={[
+          { value: 'now', label: 'Nu' },
+          { value: 'depart', label: 'Vertrek om' },
+          { value: 'arrive', label: 'Aankomst om' },
+        ]}
+      />
+      {kind !== 'now' ? (
+        <>
+          <View style={styles.days}>
+            {[0, 1, 2, 3, 4, 5, 6].map((d) => {
+              const label = d === 0 ? 'Vandaag' : d === 1 ? 'Morgen' : DAYS[(today.weekday + d) % 7];
+              return <Chip key={d} label={label} selected={dayOffset === d} onPress={() => setDayOffset(d)} />;
+            })}
+          </View>
+          <View style={styles.clockRow}>
+            <Step label="15 minuten eerder" text="−15" onPress={() => bump(-15)} />
+            <Step label="5 minuten eerder" text="−5" onPress={() => bump(-5)} />
+            <AppText style={[styles.clock, { color: c.text }]} accessibilityLabel={`Tijd ${Math.floor(minutes / 60)} uur ${minutes % 60}`}>
+              {String(Math.floor(minutes / 60)).padStart(2, '0')}:{String(minutes % 60).padStart(2, '0')}
+            </AppText>
+            <Step label="5 minuten later" text="+5" onPress={() => bump(5)} />
+            <Step label="15 minuten later" text="+15" onPress={() => bump(15)} />
+          </View>
+        </>
+      ) : null}
+      <Button title="Toon reizen" onPress={() => onDone(kind === 'now' ? { kind: 'now' } : { kind, at: iso() })} />
+    </View>
+  );
+}
+
+function Step({ text, label, onPress }: { text: string; label: string; onPress: () => void }) {
+  const c = usePalette();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={({ pressed }) => [styles.step, { backgroundColor: c.surfaceMuted, opacity: pressed ? 0.6 : 1 }]}>
+      <AppText variant="callout" color={c.accent} style={{ fontFamily: fonts.mono }}>
+        {text}
+      </AppText>
+    </Pressable>
+  );
+}
+
+function roundUp5(ms: number): number {
+  const step = 5 * 60_000;
+  return Math.ceil(ms / step) * step;
+}
+
+function dayDiff(ms: number): number {
+  const a = toNlLocal(ms);
+  const b = toNlLocal(Date.now());
+  const da = Date.UTC(a.year, a.month - 1, a.day);
+  const db = Date.UTC(b.year, b.month - 1, b.day);
+  return Math.max(0, Math.min(6, Math.round((da - db) / 86_400_000)));
+}
+
+const styles = StyleSheet.create({
+  days: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  clockRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
+  clock: { fontFamily: fonts.monoBold, fontSize: 34, minWidth: 110, textAlign: 'center' },
+  step: { height: 44, minWidth: 48, paddingHorizontal: 8, borderRadius: radius.input, alignItems: 'center', justifyContent: 'center' },
+});
