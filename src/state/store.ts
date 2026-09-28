@@ -89,6 +89,11 @@ export function addRecent(
   ].slice(0, MAX_RECENTS);
 }
 
+/** The car (or its consumption/price) changed: old car prices no longer apply. */
+export const dropCarPrices = (list: RecentDestination[]) => list.map((r) => ({ ...r, lastCostCents: undefined }));
+/** The OV discount changed: old OV prices no longer apply. */
+export const dropTransitPrices = (list: RecentDestination[]) => list.map((r) => ({ ...r, lastTransitCents: undefined }));
+
 const initial = {
   vehicle: null,
   chargingMode: 'home' as ChargingMode,
@@ -109,11 +114,12 @@ export const useApp = create<AppState>()(
     (set) => ({
       hydrated: false,
       ...initial,
-      setVehicle: (vehicle) => set({ vehicle }),
+      setVehicle: (vehicle) => set((s) => ({ vehicle, recents: dropCarPrices(s.recents) })),
       setConsumption: (value) =>
         set((s) =>
           s.vehicle
             ? {
+                recents: dropCarPrices(s.recents),
                 vehicle: {
                   ...s.vehicle,
                   consumption: { value, unit: s.vehicle.pricedFuel === 'electricity' ? 'kWh' : 'L', source: 'user', method: 'user' },
@@ -127,13 +133,13 @@ export const useApp = create<AppState>()(
           const next = { ...s.priceOverrides };
           if (price === null) delete next[fuel];
           else next[fuel] = price;
-          return { priceOverrides: next };
+          return { priceOverrides: next, recents: dropCarPrices(s.recents) };
         }),
       setStartMode: (startMode) => set({ startMode }),
       setManualStart: (p) => set({ manualStart: p ? sanitizePlace(p) : null }),
       setDestination: (destination) => set({ destination }),
       rememberTrip: (place, costs) => set((s) => ({ recents: addRecent(s.recents, place, costs) })),
-      setTransitProfile: (transitProfile) => set({ transitProfile, transitProfileAsked: true }),
+      setTransitProfile: (transitProfile) => set((s) => ({ transitProfile, transitProfileAsked: true, recents: dropTransitPrices(s.recents) })),
       setAppearance: (appearance) => set({ appearance }),
       setTimeQuery: (timeQuery) => set({ timeQuery }),
       setSelectedItinerary: (selectedItinerary) => set({ selectedItinerary }),

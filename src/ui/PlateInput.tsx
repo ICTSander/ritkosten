@@ -31,7 +31,7 @@ export function PlateInput({
         onChangeText={(t) => onChangeText(t.toUpperCase().replace(/[^A-Z0-9-]/gi, '').slice(0, 8))}
         onSubmitEditing={onSubmit}
         placeholder="AB-123-C"
-        placeholderTextColor="rgba(17,17,17,0.35)"
+        placeholderTextColor="rgba(17,17,17,0.2)"
         autoCapitalize="characters"
         autoCorrect={false}
         autoComplete="off"

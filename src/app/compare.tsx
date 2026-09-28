@@ -11,6 +11,8 @@ import {
   filterItineraries,
   type LegMode,
   sortItineraries,
+  tightTransfers,
+  tightTransferText,
   type TransitSort,
 } from '@/domain/transit';
 import {
@@ -135,8 +137,8 @@ export default function CompareScreen() {
         </View>
       ) : (
         <>
-          <CarCard state={car} mult={mult} onRetry={() => setAttempt((n) => n + 1)} onTripPrice={setTripPrice} destination={destination} nowMs={openedAt} />
           <Difference car={car} transit={transit} mult={mult} />
+          <CarCard state={car} mult={mult} onRetry={() => setAttempt((n) => n + 1)} onTripPrice={setTripPrice} destination={destination} nowMs={openedAt} />
           <TransitCard state={transit} mult={mult} onRetry={() => setAttempt((n) => n + 1)} onPickTime={() => setShowTime(true)} />
           {transit.status === 'ok' && transit.options.length > 1 ? <MoreOptions state={transit} /> : null}
           <SourceNotes car={car} transit={transit} />
@@ -328,6 +330,14 @@ function TransitCard({ state, mult, onRetry, onPickTime }: { state: TransitState
               <View style={{ marginTop: space.md }}>
                 <LegStrip itinerary={it} />
               </View>
+              {tightTransfers(it).map((t) => (
+                <View key={t.legIndex} style={styles.tight}>
+                  <Icon name="warning" size={14} color={c.warning} />
+                  <AppText variant="footnote" color={c.warning} style={{ flex: 1 }}>
+                    {tightTransferText(t)}
+                  </AppText>
+                </View>
+              ))}
               {!asked ? (
                 <Pressable onPress={() => router.push('/ov-profile')} accessibilityRole="button" style={{ marginTop: space.md }}>
                   <AppText variant="footnote" color={c.accent}>
@@ -385,9 +395,9 @@ function Difference({ car, transit, mult }: { car: CarState; transit: TransitSta
   const ready = car.status === 'ok' && transit.status === 'ok';
   const [opacity] = useState(() => new Animated.Value(0));
   useEffect(() => {
-    if (ready) Animated.timing(opacity, { toValue: 1, duration: reduce ? 0 : 260, delay: reduce ? 0 : 700, useNativeDriver: true }).start();
+    if (ready) Animated.timing(opacity, { toValue: 1, duration: reduce ? 0 : 260, delay: reduce ? 0 : 150, useNativeDriver: true }).start();
   }, [ready, opacity, reduce]);
-  if (!ready) return <View style={{ height: space.md }} />;
+  if (!ready) return null;
   const best = transit.options[0];
   const lines = compareModes(
     { cents: car.cost.totalCents, durationMin: car.route.durationMin ?? null },
@@ -395,13 +405,24 @@ function Difference({ car, transit, mult }: { car: CarState; transit: TransitSta
     mult,
   );
   const text = lines.map((l) => l.text).join(' · ');
+  const cost = lines.find((l) => l.kind === 'cost');
+  const time = lines.find((l) => l.kind === 'time');
+  // The answer to "wat is goedkoper?" goes first, big, above both cards.
   return (
-    <Animated.View style={[styles.diff, { opacity }]} accessibilityLiveRegion="polite" accessible accessibilityLabel={text}>
-      <AppText variant="callout" color={c.textSecondary} style={{ textAlign: 'center' }}>
-        {text}
-      </AppText>
+    <Animated.View
+      style={[styles.diff, { opacity, backgroundColor: c.accentSoft }]}
+      accessibilityLiveRegion="polite"
+      accessible
+      accessibilityRole="summary"
+      accessibilityLabel={text}>
+      {cost ? <AppText variant="title">{cost.text}</AppText> : null}
+      {time ? (
+        <AppText variant="callout" color={c.textSecondary}>
+          {time.text}
+        </AppText>
+      ) : null}
       {best.fare.isEstimate ? (
-        <AppText variant="caption" color={c.textTertiary} style={{ textAlign: 'center', marginTop: 2 }}>
+        <AppText variant="caption" color={c.textSecondary} style={{ marginTop: 2 }}>
           Berekend met een geschatte OV-prijs
         </AppText>
       ) : null}
@@ -432,6 +453,9 @@ function MoreOptions({ state }: { state: Extract<TransitState, { status: 'ok' }>
   return (
     <View>
       <SectionLabel>Meer OV-reizen</SectionLabel>
+      <AppText variant="footnote" color={c.textSecondary} style={{ marginBottom: space.sm, marginLeft: space.lg }}>
+        Toon reizen met:
+      </AppText>
       <View style={styles.filters}>
         {(['train', 'bus', 'tram', 'metro'] as LegMode[]).map((m) => (
           <Chip key={m} label={MODE_WORD[m]} icon={MODE_ICON[m]} selected={modes.includes(m)} onPress={() => toggle(m)} />
@@ -531,7 +555,8 @@ const styles = StyleSheet.create({
   card: { marginTop: space.lg, gap: space.xs },
   modeHeader: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginBottom: space.sm },
   modeIcon: { width: 32, height: 32, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
-  diff: { paddingVertical: space.md, paddingHorizontal: space.lg },
+  tight: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: space.sm },
+  diff: { marginTop: space.lg, paddingVertical: space.md, paddingHorizontal: space.lg, borderRadius: 16, gap: 2 },
   leaveBy: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.md, borderRadius: 12, marginTop: space.md },
   filters: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   option: { paddingHorizontal: space.lg, paddingVertical: space.md, gap: 2 },

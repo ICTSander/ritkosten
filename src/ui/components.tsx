@@ -339,14 +339,14 @@ export function Chip({
       style={({ pressed }) => [
         styles.chip,
         {
-          backgroundColor: selected ? c.accent : c.surface,
+          backgroundColor: selected ? c.accentSoft : c.surface,
           borderColor: selected ? c.accent : c.separator,
-          borderBottomColor: selected ? c.accentEdge : c.edge,
+          borderBottomColor: selected ? c.accent : c.edge,
           opacity: pressed ? 0.7 : 1,
         },
       ]}>
-      {icon ? <Icon name={icon} size={14} color={selected ? c.onAccent : c.textSecondary} /> : null}
-      <AppText variant="callout" color={selected ? c.onAccent : c.text}>
+      {icon ? <Icon name={icon} size={14} color={selected ? c.accent : c.textSecondary} /> : null}
+      <AppText variant="callout" color={selected ? c.accent : c.text} style={selected ? { fontFamily: fonts.bold } : undefined}>
         {label}
       </AppText>
     </Pressable>

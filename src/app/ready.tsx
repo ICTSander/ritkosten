@@ -81,9 +81,12 @@ export default function ReadyScreen() {
         />
       }>
       <View style={{ gap: space.sm, marginTop: space.sm, marginBottom: space.xxl }}>
-        <AppText variant="caption" color={c.accent}>
-          STAP 2 VAN 3
-        </AppText>
+        {/* Only during the first setup; changing your car later isn't a "step 2 of 3". */}
+        {!transitAsked ? (
+          <AppText variant="caption" color={c.accent}>
+            STAP 2 VAN 3
+          </AppText>
+        ) : null}
         <AppText variant="largeTitle" accessibilityRole="header" accessibilityLiveRegion="polite">
           {allDone ? 'Je auto is ingesteld.' : needsConsumption ? 'Nog één ding.' : 'Bijna klaar.'}
         </AppText>

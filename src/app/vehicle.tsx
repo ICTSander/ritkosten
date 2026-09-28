@@ -96,7 +96,7 @@ export default function VehicleScreen() {
           <AppText variant="callout" color={c.textSecondary}>
             {data.platformSections
               ? `De trein staat langs perrondeel ${data.platformSections}.`
-              : 'De NS-data bevat voor deze trein geen indeling.'}
+              : 'Voor deze trein weten we niet in welk deel je het beste kunt instappen.'}
             {data.crowd ? ` Verwachte drukte: ${data.crowd === 'LOW' ? 'rustig' : data.crowd === 'MEDIUM' ? 'gemiddeld' : 'druk'}.` : ''}
           </AppText>
 

@@ -92,3 +92,44 @@ export function filterItineraries(list: TransitItinerary[], filters: TransitFilt
   const allowed = new Set<LegMode>(filters.modes);
   return list.filter((it) => vehicleLegs(it).every((l) => allowed.has(l.mode) || l.mode === 'other'));
 }
+
+export interface TightTransfer {
+  /** Index of the leg you have to catch. */
+  legIndex: number;
+  /** Where you change. */
+  at: string;
+  /** Minutes between getting off and the next departure. */
+  minutes: number;
+  /** Minutes of walking in between (0 when you stay on the platform/stop). */
+  walkMin: number;
+}
+
+/**
+ * Changes where you have less than 3 minutes to spare after walking. We only flag them; the
+ * planner (Transitous/OTP) already considered them feasible, so it's a heads-up, not an error.
+ */
+export function tightTransfers(it: Pick<TransitItinerary, 'legs'>, spareMin = 3): TightTransfer[] {
+  const out: TightTransfer[] = [];
+  let lastRide: Leg | undefined;
+  let walkMin = 0;
+  it.legs.forEach((leg, i) => {
+    if (leg.mode === 'walk') {
+      walkMin += leg.durationMin;
+      return;
+    }
+    if (lastRide) {
+      const minutes = Math.round((Date.parse(leg.departure) - Date.parse(lastRide.arrival)) / 60_000);
+      if (minutes - walkMin < spareMin) out.push({ legIndex: i, at: lastRide.to.name || leg.from.name, minutes, walkMin: Math.round(walkMin) });
+    }
+    lastRide = leg;
+    walkMin = 0;
+  });
+  return out;
+}
+
+export function tightTransferText(t: TightTransfer): string {
+  const where = t.at ? ` in ${t.at}` : '';
+  return t.walkMin > 0
+    ? `Krappe overstap${where}: ${t.minutes} min, waarvan ${t.walkMin} min lopen`
+    : `Krappe overstap${where}: ${t.minutes} min`;
+}

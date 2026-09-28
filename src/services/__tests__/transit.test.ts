@@ -1,3 +1,4 @@
+import { tightTransfers, tightTransferText } from '../../domain/transit';
 import { lineColors } from '../../ui/transit';
 import { buildGoogleMapsDirectionsUrl } from '../maps';
 import { AppError } from '../http';
@@ -138,5 +139,19 @@ describe('line colours', () => {
     expect(lineColors(leg('train', 'ff0000'))).toBeUndefined();
     expect(lineColors(leg('bus', 'red'))).toBeUndefined();
     expect(lineColors(leg('bus'))).toBeUndefined();
+  });
+});
+
+describe('tight transfers', () => {
+  const at = (hhmm: string) => `2026-09-29T${hhmm}:00+02:00`;
+  const leg = (mode: string, dep: string, arr: string, dur: number, name = 'Voerendaal') =>
+    ({ mode, departure: at(dep), arrival: at(arr), durationMin: dur, from: { name }, to: { name } }) as never;
+  it('flags a change with less than 3 minutes to spare after walking', () => {
+    const t = tightTransfers({ legs: [leg('bus', '08:23', '08:27', 4), leg('walk', '08:27', '08:29', 2), leg('train', '08:29', '08:53', 24)] });
+    expect(t).toEqual([{ legIndex: 2, at: 'Voerendaal', minutes: 2, walkMin: 2 }]);
+    expect(tightTransferText(t[0])).toBe('Krappe overstap in Voerendaal: 2 min, waarvan 2 min lopen');
+  });
+  it('leaves comfortable changes alone', () => {
+    expect(tightTransfers({ legs: [leg('bus', '08:00', '08:10', 10), leg('train', '08:20', '08:50', 30)] })).toEqual([]);
   });
 });

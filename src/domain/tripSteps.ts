@@ -71,9 +71,12 @@ export function buildTripSteps(
     kind: 'before',
     legIndex: 0,
     title: `Vertrek om ${formatNlClock(new Date(t0.dep).toISOString())}`,
+    // An overview of the start — the next step already says where to walk to.
     subtitle:
       first.mode === 'walk'
-        ? `Loop dan naar ${first.to.name || (firstVehicle ? 'de halte' : destinationLabel)}`
+        ? firstVehicle
+          ? `Eerst ${Math.max(1, Math.round(first.durationMin))} min lopen, dan ${lineName(firstVehicle)} om ${formatNlClock(new Date(times(firstVehicle, delays[legs.indexOf(firstVehicle)]).dep).toISOString())}`
+          : `${Math.max(1, Math.round(first.durationMin))} min lopen naar ${destinationLabel}`
         : `Stap in ${lineName(first)} richting ${first.headsign ?? first.to.name}`,
     countdownLabel: 'tot je moet vertrekken',
     startsAt: 0,
@@ -169,6 +172,7 @@ export function formatCountdown(ms: number): string {
   const h = Math.floor(total / 3600);
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
-  const ss = String(s).padStart(2, '0');
-  return h ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`;
+  // An hour or more away: ticking seconds only add stress, so show hours and minutes.
+  if (h) return m ? `${h} u ${m} min` : `${h} u`;
+  return `${m}:${String(s).padStart(2, '0')}`;
 }

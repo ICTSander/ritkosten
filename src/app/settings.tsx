@@ -212,7 +212,8 @@ export default function Settings() {
           subtitle={nsTrainInfoAvailable() ? 'Actief: drukte, treintype, zitplaatsen, faciliteiten' : 'Niet ingesteld (NS-key op de proxy nodig)'}
           right={<Icon name={nsTrainInfoAvailable() ? 'checkCircle' : 'info'} size={18} color={nsTrainInfoAvailable() ? c.success : c.textTertiary} />}
         />
-        {allTransitProviders().map((p) => {
+        {/* Only sources that actually work; a "not connected" row just looks unfinished. */}
+        {allTransitProviders().filter((p) => p.availability().status === 'available').map((p) => {
           const a = p.availability();
           return (
             <ListRow
@@ -230,7 +231,7 @@ export default function Settings() {
       <AppText variant="footnote" color={c.textSecondary} style={{ gap: 4 }}>
         Auto en verbruik: RDW Open Data. Brandstof- en stroomprijzen: CBS StatLine (landelijke gemiddelden). OV-reisadvies:
         Transitous (open OV-data, transitous.org/sources). OV-prijzen: geschat met de NS-prijslijst 2026 en regionale
-        bus-/tramtarieven. Adressen: PDOK Locatieserver en Photon. Routes: OpenStreetMap via FOSSGIS/OSRM. Kaartdata © OpenStreetMap-bijdragers.
+        bus-/tramtarieven. Adressen: PDOK Locatieserver en Photon. Routes: OpenStreetMap via FOSSGIS (Valhalla/OSRM). Kaartdata © OpenStreetMap-bijdragers.
         Alle bedragen zijn schattingen.
       </AppText>
     </Screen>

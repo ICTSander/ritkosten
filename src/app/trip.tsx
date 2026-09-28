@@ -2,18 +2,19 @@ import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import * as Haptics from 'expo-haptics';
 import { Redirect, router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { nearestStationName } from '@/domain/fare/tariffUnits';
 import { formatNlClock } from '@/domain/nlTime';
+import { tightTransfers, tightTransferText } from '@/domain/transit';
 import { buildTripSteps, currentStepIndex, formatCountdown, tripProgress } from '@/domain/tripSteps';
 import { useAsyncResource } from '@/state/hooks';
 import { useApp } from '@/state/store';
 import { cancelTripAlerts, enableTripAlerts } from '@/services/tripAlerts';
 import { fetchNsTrainInfo, fetchTrainPosition, hasNsTrainInfo, nsTrainInfoAvailable } from '@/services/transit/nsTrainInfo';
 import { haversineM } from '@/services/transit/polyline';
-import { AppText, Button, Card, IconButton } from '@/ui/components';
+import { AppText, Button, Card, IconButton, Skeleton } from '@/ui/components';
 import { Icon } from '@/ui/Icon';
 import { TrainImages } from '@/ui/TrainImages';
 import { TripProgress } from '@/ui/TripProgress';
@@ -96,6 +97,10 @@ export default function TripScreen() {
   const distanceKm =
     pos && trainLeg ? Math.max(0, haversineM([pos.lat, pos.lon], [trainLeg.to.lat, trainLeg.to.lon]) / 1000) : undefined;
   const near = pos ? nearestStationName(pos.lat, pos.lon) : undefined;
+  // A tight change coming up: the leg this step leads to (walking/riding towards it).
+  const tight = tightTransfers(itinerary).find(
+    (t) => t.legIndex === live.legIndex || (t.legIndex > live.legIndex && legs.slice(live.legIndex + 1, t.legIndex).every((l) => l.mode === 'walk')),
+  );
   const urgent = live.kind !== 'before' && live.kind !== 'arrived' && remaining < 2 * 60_000;
 
   return (
@@ -108,8 +113,9 @@ export default function TripScreen() {
         <View style={{ width: 44 }} />
       </View>
 
-      <View style={styles.body}>
-        <TripProgress itinerary={itinerary} progress={tripProgress(itinerary, now)} />
+      {/* Scrolls when a warning and the train card make the step taller than the screen. */}
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.body}>
+        <TripProgress itinerary={itinerary} progress={tripProgress(itinerary, now)} viewingLeg={manualOffset !== 0 ? live.legIndex : undefined} />
 
         <Card style={styles.main}>
           {live.kind === 'arrived' ? (
@@ -122,7 +128,7 @@ export default function TripScreen() {
             <>
               <View style={[styles.countBox, { backgroundColor: urgent ? c.warningSoft : c.highlight, borderColor: urgent ? c.warning : c.highlightEdge }]}>
               <AppText
-                style={[styles.countdown, { color: urgent ? c.warning : c.text }]}
+                style={[styles.countdown, remaining >= 3_600_000 && styles.countdownLong, { color: urgent ? c.warning : c.text }]}
                 accessibilityRole="timer"
                 accessibilityLabel={`Nog ${Math.max(0, Math.round(remaining / 60_000))} minuten ${live.countdownLabel}`}
                 adjustsFontSizeToFit
@@ -163,22 +169,34 @@ export default function TripScreen() {
                 </View>
               </View>
 
-              {/* The train, when it matters: on the platform and on board. */}
-              {trainLeg && info.status === 'ok' ? (
+              {tight && (live.kind === 'walk' || live.kind === 'board' || live.kind === 'ride') ? (
+                <View style={[styles.tight, { backgroundColor: c.warningSoft }]} accessibilityRole="alert">
+                  <Icon name="warning" size={16} color={c.warning} />
+                  <AppText variant="callout" color={c.text} style={{ flex: 1 }}>
+                    {tightTransferText(tight)}
+                  </AppText>
+                </View>
+              ) : null}
+
+              {/* The train, when it matters: on the platform and on board. Shown right away (also while
+                  NS data loads) so it's clear there is more to see. */}
+              {trainLeg && nsOn && info.status !== 'error' ? (
                 <Pressable
                   onPress={() => router.push({ pathname: '/vehicle', params: { leg: String(live.legIndex) } })}
                   accessibilityRole="button"
-                  accessibilityLabel="Voertuiginfo bekijken"
-                  style={[styles.train, { backgroundColor: c.surfaceMuted }]}>
-                  <TrainImages info={info.data} height={34} />
+                  accessibilityLabel="Bekijk de trein"
+                  style={({ pressed }) => [styles.train, { backgroundColor: c.surfaceMuted, opacity: pressed ? 0.7 : 1 }]}>
+                  {info.status === 'ok' ? <TrainImages info={info.data} height={34} /> : <Skeleton width="100%" height={34} />}
                   <View style={styles.trainMeta}>
                     <AppText variant="footnote" color={c.textSecondary} style={{ flex: 1 }}>
-                      {[info.data.trainType, info.data.parts ? `${info.data.parts} bakken` : undefined, info.data.crowd === 'LOW' ? 'rustig' : info.data.crowd === 'MEDIUM' ? 'gemiddeld druk' : info.data.crowd === 'HIGH' ? 'druk' : undefined]
-                        .filter(Boolean)
-                        .join(' · ')}
+                      {info.status === 'ok'
+                        ? [info.data.trainType, info.data.parts ? `${info.data.parts} bakken` : undefined, info.data.crowd === 'LOW' ? 'rustig' : info.data.crowd === 'MEDIUM' ? 'gemiddeld druk' : info.data.crowd === 'HIGH' ? 'druk' : undefined]
+                            .filter(Boolean)
+                            .join(' · ')
+                        : 'Treininfo laden…'}
                     </AppText>
-                    <AppText variant="footnote" color={c.accent}>
-                      Voertuiginfo ›
+                    <AppText variant="callout" color={c.accent} style={{ fontFamily: fonts.bold }}>
+                      Bekijk trein ›
                     </AppText>
                   </View>
                 </Pressable>
@@ -266,7 +284,7 @@ export default function TripScreen() {
             Meldingen staan uit in je instellingen.
           </AppText>
         ) : null}
-      </View>
+      </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, space.lg) }]}>
         <Button title="Bekijk hele reis" icon="route" variant="secondary" onPress={() => router.push('/journey')} />
@@ -277,8 +295,9 @@ export default function TripScreen() {
 
 const styles = StyleSheet.create({
   top: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: space.sm, width: '100%', maxWidth: MAX_WIDTH + 16, alignSelf: 'center' },
-  body: { flex: 1, paddingHorizontal: 20, gap: space.lg, width: '100%', maxWidth: MAX_WIDTH, alignSelf: 'center' },
+  body: { flexGrow: 1, paddingHorizontal: 20, paddingBottom: space.lg, gap: space.lg, width: '100%', maxWidth: MAX_WIDTH, alignSelf: 'center' },
   main: { gap: space.xs, paddingVertical: space.xl },
+  countdownLong: { fontSize: 56, lineHeight: 96 },
   countBox: { borderRadius: 22, borderWidth: 2, borderBottomWidth: 6, paddingVertical: space.lg, paddingHorizontal: space.md, gap: 2 },
   countdown: { fontFamily: fonts.monoBold, fontSize: 88, lineHeight: 96, letterSpacing: -1, textAlign: 'center', fontVariant: ['tabular-nums'] },
   divider: { height: StyleSheet.hairlineWidth, marginVertical: space.lg },
@@ -291,6 +310,7 @@ const styles = StyleSheet.create({
   liveDot: { width: 8, height: 8, borderRadius: 4 },
   next: { gap: 2, paddingHorizontal: space.xs },
   manual: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: space.xs },
+  tight: { flexDirection: 'row', alignItems: 'center', gap: space.sm, borderRadius: 12, padding: space.md, marginTop: space.md },
   alertCard: { flexDirection: 'row', alignItems: 'center', gap: space.sm, borderWidth: 2, borderRadius: radius.input, padding: space.md },
   alertOn: { flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'center' },
   footer: { paddingHorizontal: 20, paddingTop: space.md, width: '100%', maxWidth: MAX_WIDTH, alignSelf: 'center' },

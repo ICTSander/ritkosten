@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
 import { formatNlClock, nlLocalToIso, toNlLocal } from '../domain/nlTime';
 import type { TimeQuery } from '../domain/transit';
@@ -40,7 +40,7 @@ export function TimePicker({
     value.kind !== 'now' && Date.parse(value.at) > openedAt
       ? Date.parse(value.at)
       : arriveOnly
-        ? roundUp15(openedAt) + 60 * 60_000
+        ? defaultArrival(openedAt)
         : roundUp5(openedAt),
   );
   const [dayOffset, setDayOffset] = useState(() => dayDiff(initial, openedAt));
@@ -48,6 +48,16 @@ export function TimePicker({
   const [today] = useState(() => toNlLocal(openedAt));
 
   const bump = (delta: number) => setMinutes((m) => (m + delta + 1440) % 1440);
+  /** Text while the user types a time on the clock; null = show the formatted time. */
+  const [typing, setTyping] = useState<string | null>(null);
+  const commitTyped = () => {
+    if (typing !== null) {
+      const parsed = parseClock(typing);
+      if (parsed !== null) setMinutes(parsed);
+    }
+    setTyping(null);
+  };
+  const clockText = `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
   const iso = () => {
     // Local midnight of today + dayOffset, then the chosen clock time.
     const base = Date.UTC(today.year, today.month - 1, today.day + dayOffset, 12);
@@ -72,19 +82,30 @@ export function TimePicker({
       )}
       {kind !== 'now' ? (
         <>
-          <View style={styles.days}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.days}>
             {[0, 1, 2, 3, 4, 5, 6].map((d) => {
               const label = d === 0 ? 'Vandaag' : d === 1 ? 'Morgen' : DAYS[(today.weekday + d) % 7];
               return <Chip key={d} label={label} selected={dayOffset === d} onPress={() => setDayOffset(d)} />;
             })}
-          </View>
-          {/* The time on its own line, so it always fits; big steps first, fine steps inside. */}
-          <AppText
-            style={[styles.clock, { color: inPast ? c.textTertiary : c.text }]}
-            accessibilityLabel={`${kind === 'arrive' ? 'Aankomsttijd' : 'Vertrektijd'} ${Math.floor(minutes / 60)} uur ${minutes % 60}`}
-            adjustsFontSizeToFit
-            numberOfLines={1}>
-            {String(Math.floor(minutes / 60)).padStart(2, '0')}:{String(minutes % 60).padStart(2, '0')}
+          </ScrollView>
+          {/* The time on its own line, so it always fits. Tap it to type a time ("9", "930", "9:30"). */}
+          <TextInput
+            value={typing ?? clockText}
+            onFocus={() => setTyping('')}
+            onChangeText={setTyping}
+            onBlur={commitTyped}
+            onSubmitEditing={commitTyped}
+            placeholder={clockText}
+            placeholderTextColor={c.textTertiary}
+            keyboardType="numbers-and-punctuation"
+            returnKeyType="done"
+            maxLength={5}
+            selectTextOnFocus
+            accessibilityLabel={`${kind === 'arrive' ? 'Aankomsttijd' : 'Vertrektijd'} ${Math.floor(minutes / 60)} uur ${minutes % 60}. Tik om een tijd te typen`}
+            style={[styles.clock, { color: inPast ? c.textTertiary : c.text, outlineStyle: 'none' } as never]}
+          />
+          <AppText variant="footnote" color={c.textSecondary} style={{ textAlign: 'center', marginTop: -space.md }}>
+            Tik op de tijd om hem te typen
           </AppText>
           <View style={styles.clockRow}>
             <Step label="1 uur eerder" text="−1 u" onPress={() => bump(-60)} />
@@ -123,6 +144,29 @@ function Step({ text, label, onPress }: { text: string; label: string; onPress: 
   );
 }
 
+/** "9" → 9:00, "930" / "0930" / "9:30" / "9.30" → 9:30. Null when it isn't a valid time. */
+export function parseClock(text: string): number | null {
+  const t = text.trim().replace('.', ':');
+  let h: number;
+  let m: number;
+  if (/^\d{1,2}:\d{1,2}$/.test(t)) [h, m] = t.split(':').map(Number) as [number, number];
+  else if (/^\d{1,2}$/.test(t)) [h, m] = [Number(t), 0];
+  else if (/^\d{3,4}$/.test(t)) [h, m] = [Number(t.slice(0, -2)), Number(t.slice(-2))];
+  else return null;
+  return h < 24 && m < 60 ? h * 60 + m : null;
+}
+
+/** Arrive in about an hour — but late at night that makes no sense, so then: tomorrow 09:00. */
+export function defaultArrival(nowMs: number): number {
+  const candidate = roundUp15(nowMs) + 60 * 60_000;
+  const local = toNlLocal(candidate);
+  if (local.minutes >= 6 * 60 && local.minutes <= 22 * 60) return candidate;
+  const now = toNlLocal(nowMs);
+  const addDay = now.minutes >= 6 * 60 ? 1 : 0;
+  const d = new Date(Date.UTC(now.year, now.month - 1, now.day + addDay, 12));
+  return Date.parse(nlLocalToIso(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate(), 9, 0));
+}
+
 function roundUp5(ms: number): number {
   const step = 5 * 60_000;
   return Math.ceil(ms / step) * step;
@@ -142,8 +186,8 @@ function dayDiff(ms: number, nowMs: number): number {
 }
 
 const styles = StyleSheet.create({
-  days: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  days: { flexDirection: 'row', gap: space.sm, paddingBottom: 2 },
   clockRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  clock: { fontFamily: fonts.monoBold, fontSize: 56, lineHeight: 64, textAlign: 'center', fontVariant: ['tabular-nums'] },
+  clock: { fontFamily: fonts.monoBold, fontSize: 56, lineHeight: 64, height: 68, textAlign: 'center', fontVariant: ['tabular-nums'], paddingVertical: 0 },
   step: { flex: 1, height: 48, borderRadius: 14, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
 });

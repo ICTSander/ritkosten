@@ -1,5 +1,5 @@
 import { formatAgo, formatDecimal, formatDuration, formatEuroCents, formatKm, formatShortDate, parseDecimalInput, splitEuroCents } from '../format';
-import { addRecent } from '../../state/store';
+import { addRecent, dropCarPrices, dropTransitPrices } from '../../state/store';
 import type { Place } from '../types';
 
 describe('Dutch formatting', () => {
@@ -53,5 +53,17 @@ describe('recent destinations', () => {
     const list = addRecent([], p('a'));
     expect(list[0].place.lat).toBe(52.12346);
     expect(addRecent([], p('me', { kind: 'current-location' }))).toEqual([]);
+  });
+});
+
+describe('recent prices after a profile change', () => {
+  const place = { id: 'a', label: 'A', lat: 50, lon: 5, kind: 'address' } as never;
+  it('drops only the car price when the car changes', () => {
+    const list = addRecent([], place, { carCents: 331, transitCents: 0 }, 1);
+    expect(dropCarPrices(list)[0]).toMatchObject({ lastCostCents: undefined, lastTransitCents: 0 });
+  });
+  it('drops only the OV price when the discount changes', () => {
+    const list = addRecent([], place, { carCents: 331, transitCents: 250 }, 1);
+    expect(dropTransitPrices(list)[0]).toMatchObject({ lastCostCents: 331, lastTransitCents: undefined });
   });
 });

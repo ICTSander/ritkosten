@@ -48,7 +48,8 @@ describe('trip steps', () => {
 
   it('formats the countdown', () => {
     expect(formatCountdown(194_000)).toBe('3:14');
-    expect(formatCountdown(3_750_000)).toBe('1:02:30');
+    expect(formatCountdown(3_750_000)).toBe('1 u 2 min');
+    expect(formatCountdown(7_200_000)).toBe('2 u');
     expect(formatCountdown(-5)).toBe('0:00');
   });
 });

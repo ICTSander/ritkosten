@@ -2,7 +2,7 @@ import { Redirect, router } from 'expo-router';
 import { View } from 'react-native';
 
 import { useApp } from '@/state/store';
-import { AppText, Card, Header, Screen } from '@/ui/components';
+import { AppText, Button, Card, Header, Screen } from '@/ui/components';
 import { Icon } from '@/ui/Icon';
 import { placeIcon } from '@/ui/labels';
 import { TimePicker } from '@/ui/TimePicker';
@@ -48,6 +48,17 @@ export default function WhenScreen() {
           }}
         />
       </Card>
+      {/* For "what does it cost?" you don't need an arrival time. */}
+      <Button
+        title="Nu vertrekken"
+        variant="plain"
+        icon="clock"
+        style={{ marginTop: space.md }}
+        onPress={() => {
+          setTimeQuery({ kind: 'now' });
+          router.replace('/compare');
+        }}
+      />
     </Screen>
   );
 }
