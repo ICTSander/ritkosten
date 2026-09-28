@@ -2,6 +2,7 @@
  * Published tariff tables (data, versioned, with sources). Update yearly (tariffs change 1 January).
  */
 import nsFares from '../../data/ns-fares-2026.json';
+import { nsTariffUnits } from './tariffUnits';
 
 export interface NsFareTable {
   version: string;
@@ -29,6 +30,8 @@ export interface FareData {
   btm: BtmTariff[];
   /** Check-in within this many minutes after the previous BTM check-out → no new base fare. */
   btmTransferWindowMin: number;
+  /** Official NS tariff units between two points (nearest stations), when known. */
+  nsUnits?: (from: { lat: number; lon: number }, to: { lat: number; lon: number }) => number | undefined;
 }
 
 export const BTM_TARIFFS_2026: BtmTariff[] = [
@@ -62,6 +65,7 @@ export const FARE_DATA_2026: FareData = {
   ns: nsFares as unknown as NsFareTable,
   btm: BTM_TARIFFS_2026,
   btmTransferWindowMin: 35,
+  nsUnits: nsTariffUnits,
 };
 
 /** NS price row for a number of tariff units (0–200; NS caps at 200). */

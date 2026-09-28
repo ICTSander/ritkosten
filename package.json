@@ -54,7 +54,9 @@
     "typecheck": "tsc --noEmit",
     "data:makes": "node scripts/generate-makes.mjs",
     "test:live": "LIVE=1 jest -c jest.live.config.js",
-    "data:models": "node scripts/generate-models.mjs"
+    "data:models": "node scripts/generate-models.mjs",
+    "data:tariff-units": "node scripts/generate-ns-tariff-units.mjs",
+    "proxy": "node proxy/dev-server.mjs"
   },
   "private": true,
   "jest": {

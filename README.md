@@ -32,9 +32,9 @@ The sources below were researched and verified with live requests in September 2
 | Electricity (EV) | **CBS 85592NED** (home tariff) / **84991NED** (public charging) | no | Monthly / quarterly averages. The user can choose home or public charging. |
 | Address search | **PDOK Locatieserver** (NL addresses, places, postcodes) + **Photon** (POIs such as "Rijksmuseum", and addresses abroad) | no | Both are queried in parallel, then merged and de-duplicated. Nominatim is deliberately not used because its policy forbids autocomplete. |
 | OV journeys (door-to-door) | **Transitous** (MOTIS, open GTFS data incl. OpenOV/NDOV) | no | Walk + bus/tram/metro/train legs, platforms, realtime delays, cancellations. **Policy: free for open-source, non-commercial use; attribution link to transitous.org/sources required; contact them before heavy use.** A commercial release needs 9292 or NS instead. |
-| OV (optional) | **NS Reisinformatie API** via our proxy (`proxy/ns-worker.js`) | free NS key, **server-side only** | Realtime + official NS fares. Off until `EXPO_PUBLIC_API_BASE_URL` points to a deployed proxy. |
+| OV (optional) | **NS Reisinformatie API** via our proxy (`proxy/ns-worker.mjs`) | free NS key, **server-side only** | Realtime + official NS fares. Off until `EXPO_PUBLIC_API_BASE_URL` points to a deployed proxy. |
 | OV (licensed) | **9292 Reisadvies API** | contract + token | Provider stub reports "licentie vereist"; never uses unofficial endpoints. |
-| OV ticket prices | **NS Tarieven 2026** (full table, `src/data/ns-fares-2026.json`) + regional bus/tram tariffs (GVB, U-OV, indexed national rate) | no | Estimates (marked "≈"): tariff units ≈ rail km; BTM = €1,16 base + km-rate, no new base fare within 35 min between buses. Exact when the NS proxy returns the official fare. |
+| OV ticket prices | **NS Tarieven 2026** (full table, `src/data/ns-fares-2026.json`) + **official NS tariff units between 399 stations** (open data CC0 via Rijden de Treinen, `src/data/ns-tariff-units.json`) + regional bus/tram tariffs (GVB, U-OV, indexed national rate) | no | NS trains: **exact** full fare (stations matched by coordinates). Other train operators and bus/tram/metro: estimates marked "≈" (BTM = €1,16 base + km-rate; no new base fare within 35 min between buses). |
 | Car → navigation | **Google Maps URLs** (`maps/dir/?api=1`) | no | Opens the Google Maps app/site; origin = device location, so we never send it. |
 | Route distance | **FOSSGIS OSRM** → **FOSSGIS Valhalla** → **OSRM demo** → OpenRouteService (optional key) | no | We route once per destination, never while the user is typing. Points that snap >2 km to a road are rejected as "no route". |
 
@@ -118,6 +118,15 @@ src/
 | Offline, rate limit (429 + Retry-After), timeouts, 5xx | Retry with backoff, then a readable error with a retry button |
 | Price missing or stale | Last known price shown with a date warning, or a one-trip manual price |
 | No road route (sea, island) | "Geen route gevonden" |
+
+## NS key (optional) — 3 steps
+
+Prices for NS trains are already exact without a key. The NS key adds NS's own realtime data and fares.
+
+1. Register (free) at https://apiportal.ns.nl → subscribe to the **Ns-App** product → copy the primary key.
+2. Create `.env.proxy` (git-ignored) with `NS_API_KEY=<your key>` and run `npm run proxy` (local proxy on :8787).
+   For production deploy the same code as a Cloudflare Worker: `npx wrangler deploy proxy/ns-worker.mjs`.
+3. Put `EXPO_PUBLIC_API_BASE_URL=http://localhost:8787` (or your worker URL) in `.env` and restart `npm run web`.
 
 ## Train images
 

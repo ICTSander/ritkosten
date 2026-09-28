@@ -5,9 +5,9 @@
  *     { fullFareCents, discountCents, finalCents, isEstimate, lines, notes }
  *
  * Per-leg pricing:
- *  - NS train: official 2026 NS table by tariff units. Consecutive NS train legs form one
- *    journey (one fare over the summed distance). Tariff units ≈ rail kilometres → ESTIMATE
- *    (the exact unit count per station pair is not public).
+ *  - NS train: official 2026 NS table by the official tariff units between the first boarding
+ *    and last alighting station (open NS data). Consecutive NS train legs form one journey.
+ *    Only when a station can't be matched do we fall back to rail km → ESTIMATE.
  *  - Other train operators: priced with the NS table as an estimate (their own tariffs differ).
  *  - Bus / tram / metro / ferry: base fare + km × regional rate; no new base fare when checking
  *    in within 35 min of the previous check-out. Route km ≠ tariff km → ESTIMATE.
@@ -137,20 +137,27 @@ export function calculatePublicTransportCost(
     // A train ride in between ends the bus/tram transfer window (conservative: the 35-minute
     // rule is only applied between consecutive bus/tram/metro legs).
     lastBtmArrival = null;
-    const units = legs.reduce((sum, l) => sum + km(l), 0);
+    const officialUnits = fareData.nsUnits?.(first.from, last.to);
+    const units = officialUnits ?? legs.reduce((sum, l) => sum + km(l), 0);
     const row = nsRow(fareData.ns, units);
     const applied = applyEffect(row[1], effect, row);
+    // Exact only for NS with official tariff units; other operators have their own tariffs.
+    const exact = group.scope === 'ns-train' && officialUnits !== undefined;
     if (group.scope === 'other-train' && applied.cents > 0) {
       notes.add(`${first.operator ?? 'Deze vervoerder'} heeft een eigen tarief; we schatten de prijs met de NS-tarieftabel.`);
     }
-    if (applied.cents > 0) notes.add('Treinprijzen zijn geschat met de officiële NS-tarieftabel 2026 op basis van de afstand.');
+    if (applied.cents > 0 && exact) {
+      notes.add('NS-treinprijs volgens de officiële NS-prijslijst 2026 en de officiële tariefeenheden tussen de stations.');
+    } else if (applied.cents > 0) {
+      notes.add('Treinprijs geschat met de officiële NS-tarieftabel 2026 op basis van de afstand.');
+    }
     lines.push({
       label: `Trein${first.operator ? ` ${first.operator}` : ''} · ${route}`,
       legIndexes: group.legIndexes,
       fullCents: row[1],
       finalCents: applied.cents,
       discountLabel: applied.label,
-      isEstimate: applied.cents > 0,
+      isEstimate: applied.cents > 0 && !exact,
     });
   }
 

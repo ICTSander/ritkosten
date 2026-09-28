@@ -3,7 +3,7 @@
  * Keeps NS_API_KEY off the phone and maps NS trips to the app's TransitItinerary shape.
  *
  * Deploy:
- *   npx wrangler deploy proxy/ns-worker.js --name ritkosten-proxy
+ *   npx wrangler deploy proxy/ns-worker.mjs --name ritkosten-proxy
  *   npx wrangler secret put NS_API_KEY        # key from https://apiportal.ns.nl (free, "Ns-App" product)
  * Then set EXPO_PUBLIC_API_BASE_URL=https://ritkosten-proxy.<account>.workers.dev in the app.
  *

@@ -45,3 +45,4 @@ example
 .env
 .env.*
 !.env.example
+.env.proxy
