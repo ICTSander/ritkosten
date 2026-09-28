@@ -25,6 +25,8 @@ export interface Leg {
   headsign?: string;
   /** Route colour from the operator feed (hex without #), when provided. */
   color?: string;
+  /** Text colour for that route colour from the feed (hex without #). */
+  textColor?: string;
   from: Stop;
   to: Stop;
   plannedDeparture: string; // ISO

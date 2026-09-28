@@ -43,9 +43,22 @@ export function lineLabel(leg: Leg): string {
   return line;
 }
 
-/** Icon + line name on the mode colour. Always icon + text, never colour alone. */
+/** Official line colour from the timetable data (e.g. Arriva line 1 = magenta), with readable text. */
+export function lineColors(leg: Leg): { badge: string; text: string } | undefined {
+  if (!leg.color || !/^[0-9a-f]{6}$/i.test(leg.color) || leg.mode === 'train' || leg.mode === 'walk') return undefined;
+  const n = parseInt(leg.color, 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  // Prefer the feed's own text colour; otherwise pick black/white by brightness.
+  if (leg.textColor && /^[0-9a-f]{6}$/i.test(leg.textColor)) return { badge: `#${leg.color}`, text: `#${leg.textColor}` };
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return { badge: `#${leg.color}`, text: luminance > 0.5 ? '#111111' : '#FFFFFF' };
+}
+
+/** Icon + line name on the line's own colour (or the mode colour). Always icon + text, never colour alone. */
 export function ModeBadge({ leg, compact = false }: { leg: Leg; compact?: boolean }) {
-  const colors = useModeColors()[leg.mode];
+  const modeColors = useModeColors()[leg.mode];
+  const line = lineColors(leg);
+  const colors = line ? { ...modeColors, badge: line.badge, text: line.text } : modeColors;
   const label = lineLabel(leg);
   return (
     <View

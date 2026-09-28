@@ -78,16 +78,19 @@ export function TimePicker({
               return <Chip key={d} label={label} selected={dayOffset === d} onPress={() => setDayOffset(d)} />;
             })}
           </View>
+          {/* The time on its own line, so it always fits; big steps first, fine steps inside. */}
+          <AppText
+            style={[styles.clock, { color: inPast ? c.textTertiary : c.text }]}
+            accessibilityLabel={`${kind === 'arrive' ? 'Aankomsttijd' : 'Vertrektijd'} ${Math.floor(minutes / 60)} uur ${minutes % 60}`}
+            adjustsFontSizeToFit
+            numberOfLines={1}>
+            {String(Math.floor(minutes / 60)).padStart(2, '0')}:{String(minutes % 60).padStart(2, '0')}
+          </AppText>
           <View style={styles.clockRow}>
+            <Step label="1 uur eerder" text="−1 u" onPress={() => bump(-60)} />
             <Step label="15 minuten eerder" text="−15" onPress={() => bump(-15)} />
-            <Step label="5 minuten eerder" text="−5" onPress={() => bump(-5)} />
-            <AppText
-              style={[styles.clock, { color: inPast ? c.textTertiary : c.text }]}
-              accessibilityLabel={`${kind === 'arrive' ? 'Aankomsttijd' : 'Vertrektijd'} ${Math.floor(minutes / 60)} uur ${minutes % 60}`}>
-              {String(Math.floor(minutes / 60)).padStart(2, '0')}:{String(minutes % 60).padStart(2, '0')}
-            </AppText>
-            <Step label="5 minuten later" text="+5" onPress={() => bump(5)} />
             <Step label="15 minuten later" text="+15" onPress={() => bump(15)} />
+            <Step label="1 uur later" text="+1 u" onPress={() => bump(60)} />
           </View>
           {inPast ? (
             <AppText variant="footnote" color={c.warning} accessibilityLiveRegion="polite">
@@ -140,7 +143,7 @@ function dayDiff(ms: number, nowMs: number): number {
 
 const styles = StyleSheet.create({
   days: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  clockRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
-  clock: { fontFamily: fonts.monoBold, fontSize: 34, minWidth: 110, textAlign: 'center' },
-  step: { height: 44, minWidth: 48, paddingHorizontal: 8, borderRadius: radius.input, alignItems: 'center', justifyContent: 'center' },
+  clockRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  clock: { fontFamily: fonts.monoBold, fontSize: 56, lineHeight: 64, textAlign: 'center', fontVariant: ['tabular-nums'] },
+  step: { flex: 1, height: 48, borderRadius: radius.input, alignItems: 'center', justifyContent: 'center' },
 });

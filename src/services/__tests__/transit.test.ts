@@ -1,3 +1,4 @@
+import { lineColors } from '../../ui/transit';
 import { buildGoogleMapsDirectionsUrl } from '../maps';
 import { AppError } from '../http';
 import { ninetwoninetwo } from '../transit/ninetwoninetwo';
@@ -122,5 +123,20 @@ describe('Google Maps hand-off', () => {
     const url = buildGoogleMapsDirectionsUrl({ destination: { lat: 52, lon: 5 }, mode: 'transit' });
     expect(url).toContain('travelmode=transit');
     expect(url).not.toContain('dir_action');
+  });
+});
+
+
+describe('line colours', () => {
+  const leg = (mode: string, color?: string, textColor?: string) => ({ mode, color, textColor }) as never;
+  it('uses the official line colour for buses with readable text', () => {
+    expect(lineColors(leg('bus', 'ff00ff'))).toEqual({ badge: '#ff00ff', text: '#FFFFFF' });
+    expect(lineColors(leg('bus', '00becd'))).toEqual({ badge: '#00becd', text: '#111111' });
+    expect(lineColors(leg('bus', 'ff00ff', '000000'))).toEqual({ badge: '#ff00ff', text: '#000000' }); // feed's own text colour
+  });
+  it('ignores trains, walking and invalid colours', () => {
+    expect(lineColors(leg('train', 'ff0000'))).toBeUndefined();
+    expect(lineColors(leg('bus', 'red'))).toBeUndefined();
+    expect(lineColors(leg('bus'))).toBeUndefined();
   });
 });

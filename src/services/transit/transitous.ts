@@ -41,6 +41,7 @@ export interface MotisLeg {
   headsign?: string;
   tripShortName?: string;
   routeColor?: string;
+  routeTextColor?: string;
   intermediateStops?: unknown[];
   legGeometry?: { points: string; precision?: number };
 }
@@ -105,6 +106,7 @@ export function mapMotisLeg(l: MotisLeg): Leg {
     operator: l.agencyName || undefined,
     headsign: l.headsign || undefined,
     color: l.routeColor || undefined,
+    textColor: l.routeTextColor || undefined,
     from: { name: clean(l.from.name), lat: l.from.lat, lon: l.from.lon, platform: l.from.track, plannedPlatform: l.from.scheduledTrack },
     to: { name: clean(l.to.name), lat: l.to.lat, lon: l.to.lon, platform: l.to.track, plannedPlatform: l.to.scheduledTrack },
     plannedDeparture,
