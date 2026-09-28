@@ -8,6 +8,8 @@ destination, what the trip costs and takes **by car vs by public transport**. Fi
 location. Every next time: type a destination — the app fetches the car route + fuel price and door-to-door
 OV journeys + ticket prices automatically and shows a neutral comparison.
 
+Website & privacy policy: https://ictsander.github.io/ritkosten/ · License: MIT
+
 ## Quick start
 
 ```bash
@@ -143,6 +145,18 @@ NS's Virtual Train API exposes rolling-stock images (also for Arriva). They show
 (checked 2026-09-28) and NS's API terms forbid using NS logos. At the owner's request the app shows them in the
 live trip and vehicle screens. **Before any public release, get written permission from NS** (contact form on
 the Ns-App product page) or switch back to the drawn illustration (`TrainCard`).
+
+## Publishing (App Store / Google Play)
+
+- Config: `app.json` (bundle id `nl.ritkosten.app`, icons, permission texts, `ITSAppUsesNonExemptEncryption=false`)
+  and `eas.json` (build profiles; the proxy URL is set per profile).
+- Build & submit with EAS: `npx eas-cli@latest build -p all --profile production`, then `npx eas-cli@latest submit`.
+- Store listing needs: privacy policy URL `https://ictsander.github.io/ritkosten/privacy.html`, support URL
+  `https://ictsander.github.io/ritkosten/`, screenshots, and the data-safety / App Privacy answers
+  (location: used for app functionality, not linked to identity, not used for tracking; no other data collected).
+- Before release: NS train images stay OFF (`EXPO_PUBLIC_NS_TRAIN_IMAGES` unset) until NS gives written permission;
+  let Transitous know about the app (policy: open source + non-commercial, contact before heavy use).
+- NS proxy: `npx wrangler deploy` (Cloudflare Worker `ritkosten-proxy`), key via `npx wrangler secret put NS_API_KEY`.
 
 ## Security & privacy
 

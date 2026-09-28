@@ -9,7 +9,7 @@ import { useApp } from '@/state/store';
 import { fetchNsTrainInfo, fetchTrainPosition, nsTrainInfoAvailable } from '@/services/transit/nsTrainInfo';
 import { AppText, Card, IconButton, Screen, SectionLabel, Skeleton } from '@/ui/components';
 import { Icon, type IconName } from '@/ui/Icon';
-import { TrainImages } from '@/ui/TrainImages';
+import { nsImagesEnabled, TrainImages } from '@/ui/TrainImages';
 import { ModeBadge } from '@/ui/transit';
 import { fonts, space, usePalette } from '@/ui/theme';
 
@@ -167,7 +167,7 @@ export default function VehicleScreen() {
           </View>
 
           <AppText variant="caption" color={c.textTertiary} style={{ marginTop: space.xl }}>
-            Bron: NS Virtual Train API, NS Reisinformatie API. Afbeeldingen: NS.
+            Bron: NS Virtual Train API, NS Reisinformatie API.{nsImagesEnabled() ? ' Afbeeldingen: NS.' : ' Tekening: illustratie.'}
           </AppText>
         </>
       )}

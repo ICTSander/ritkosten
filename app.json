@@ -8,9 +8,12 @@
     "scheme": "ritkosten",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "nl.ritkosten.app",
+      "icon": "./assets/images/icon.png",
+      "supportsTablet": false,
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Ritkosten gebruikt je locatie alleen om de route vanaf waar je nu bent te berekenen. Je locatie wordt niet bewaard."
+        "NSLocationWhenInUseUsageDescription": "Ritkosten gebruikt je locatie alleen om je auto- en OV-route vanaf waar je nu bent te berekenen. Je locatie wordt niet bewaard.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -23,8 +26,11 @@
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION"
-      ]
+        "ACCESS_FINE_LOCATION",
+        "POST_NOTIFICATIONS",
+        "VIBRATE"
+      ],
+      "package": "nl.ritkosten.app"
     },
     "web": {
       "output": "single",
@@ -33,23 +39,30 @@
     "plugins": [
       "expo-router",
       [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Ritkosten gebruikt je locatie alleen om de route vanaf waar je nu bent te berekenen. Je locatie wordt niet bewaard."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#0A5BB0",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 96
         }
       ],
       [
-        "expo-location",
+        "expo-notifications",
         {
-          "locationWhenInUsePermission": "Ritkosten gebruikt je locatie alleen om de route vanaf waar je nu bent te berekenen. Je locatie wordt niet bewaard."
+          "color": "#0A5BB0"
         }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "description": "Vergelijk voor elke reis wat het kost met de auto en met het OV, en reis stap voor stap met live treininfo."
   }
 }

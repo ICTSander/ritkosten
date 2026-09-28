@@ -2,6 +2,13 @@ import { Image } from 'expo-image';
 import { ScrollView, View } from 'react-native';
 
 import type { NsTrainInfo } from '../services/transit/nsTrainInfo';
+import { TrainArt } from './transit';
+
+/**
+ * NS's own train images show the NS logo, which NS's API terms forbid us to use without permission.
+ * They're only shown when EXPO_PUBLIC_NS_TRAIN_IMAGES=1 (local testing). Store builds show our drawing.
+ */
+export const nsImagesEnabled = () => process.env.EXPO_PUBLIC_NS_TRAIN_IMAGES === '1';
 
 /**
  * NS side-view drawings of the actual coupled units, in order.
@@ -10,7 +17,10 @@ import type { NsTrainInfo } from '../services/transit/nsTrainInfo';
  */
 export function TrainImages({ info, height = 44 }: { info: NsTrainInfo; height?: number }) {
   const parts = (info.carriages ?? []).filter((c) => c.image && c.width && c.height);
-  if (!parts.length) return null;
+  if (!nsImagesEnabled() || !parts.length) {
+    const doubleDeck = info.doubleDeck ?? false;
+    return <TrainArt parts={info.parts ?? 3} doubleDeck={doubleDeck} />;
+  }
   return (
     <ScrollView
       horizontal

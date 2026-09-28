@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ritkosten · Privacyverklaring</title>
+<style>
+  :root { --bg:#F3F4F6; --fg:#0F1216; --muted:#545C66; --accent:#0A5BB0; --card:#fff; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0B0D10; --fg:#F1F3F5; --muted:#A2AAB3; --accent:#7AB0FF; --card:#15181C; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font:17px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+  main { max-width:720px; margin:0 auto; padding:32px 16px 64px; }
+  h1 { font-size:32px; line-height:1.2; margin:0 0 4px; } h2 { font-size:20px; margin:32px 0 8px; }
+  p, li { color:var(--fg); } .muted { color:var(--muted); } a { color:var(--accent); }
+  table { width:100%; border-collapse:collapse; background:var(--card); border-radius:12px; overflow:hidden; font-size:15px; }
+  th, td { text-align:left; padding:10px 12px; border-bottom:1px solid rgba(127,127,127,.2); vertical-align:top; }
+</style>
+</head>
+<body>
+<main>
+<h1>Privacyverklaring Ritkosten</h1>
+<p class="muted">Laatst bijgewerkt: 28 september 2026 · <a href="#english">English summary</a></p>
+
+<p>Ritkosten vergelijkt wat een reis kost met de auto en met het openbaar vervoer. We willen zo weinig mogelijk over je weten.</p>
+<ul>
+  <li><strong>Geen account</strong>, geen advertenties, geen tracking- of analysediensten.</li>
+  <li>Je instellingen (je auto, je OV-korting, je vertrekpunt en recente bestemmingen) staan <strong>alleen op je eigen telefoon</strong>.</li>
+  <li>Je <strong>locatie</strong> gebruiken we alleen als je daar toestemming voor geeft, alleen terwijl je de app gebruikt, en alleen om je route te berekenen. We slaan je locatie niet op.</li>
+</ul>
+
+<h2>Welke gegevens gaan naar welke dienst?</h2>
+<p>Om je reis uit te rekenen stuurt de app alleen het hoognodige naar deze diensten:</p>
+<table>
+  <tr><th>Dienst</th><th>Wat wordt gestuurd</th><th>Waarvoor</th></tr>
+  <tr><td>RDW Open Data</td><td>Je kenteken of het merk/model dat je zoekt</td><td>Verbruik en brandstofsoort van je auto opzoeken</td></tr>
+  <tr><td>CBS StatLine</td><td>Welke brandstof (bijv. benzine)</td><td>Gemiddelde brandstof- of stroomprijs</td></tr>
+  <tr><td>PDOK (overheid) en Photon (komoot)</td><td>Wat je in het zoekveld typt; bij het tonen van je plaatsnaam een grove positie (± 1 km)</td><td>Adressen en plekken zoeken</td></tr>
+  <tr><td>FOSSGIS (OpenStreetMap-routering)</td><td>Coördinaten van vertrekpunt en bestemming</td><td>Autoroute, afstand en reistijd</td></tr>
+  <tr><td>Transitous</td><td>Coördinaten van vertrekpunt en bestemming, en de gekozen tijd</td><td>OV-reisadvies</td></tr>
+  <tr><td>Onze server bij Cloudflare, die NS raadpleegt</td><td>Treinnummer en station (geen locatie van jou)</td><td>Treininfo: drukte, treinstel, positie van de trein</td></tr>
+  <tr><td>Google Maps</td><td>De bestemming, alleen als je zelf op "Open in Google Maps" tikt</td><td>Navigatie in Google Maps</td></tr>
+</table>
+<p class="muted">Deze diensten ontvangen daarbij, zoals bij elk internetverzoek, technische gegevens zoals je IP-adres. Ritkosten bewaart zelf niets op een server; onze Cloudflare-server houdt treininformatie maximaal een minuut in het geheugen en slaat geen persoonsgegevens op.</p>
+
+<h2>Meldingen</h2>
+<p>Zet je tijdens een reis "Tril als ik moet overstappen of uitstappen" aan, dan plant de app <strong>lokale</strong> meldingen op je telefoon. Daar komt geen server aan te pas.</p>
+
+<h2>Je gegevens wissen</h2>
+<p>In de app: <em>Mijn reisprofiel → Alle gegevens wissen</em>. Of verwijder de app; dan is alles weg.</p>
+
+<h2>Contact</h2>
+<p>Vragen of opmerkingen? Maak een melding aan op <a href="https://github.com/ICTSander/ritkosten/issues">GitHub</a>. De broncode van de app is openbaar.</p>
+
+<h2 id="english">English summary</h2>
+<p>No account, no ads, no tracking. Settings stay on your device. Location is used only with your permission, while using the app, to calculate your route, and is never stored. To plan a trip the app sends the minimum needed to the services listed above (RDW, CBS, PDOK, Photon, FOSSGIS, Transitous, our Cloudflare proxy for NS train details, and Google Maps when you choose to open it). Delete everything via <em>Mijn reisprofiel → Alle gegevens wissen</em> or by removing the app.</p>
+</main>
+</body>
+</html>

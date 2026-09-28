@@ -284,7 +284,7 @@ function RideRow({ leg, fromName, toName, color }: { leg: Leg; fromName: string;
 }
 
 /** Side-view train drawing (our own — NS images carry the NS logo, which we may not use). */
-function TrainArt({ parts, doubleDeck }: { parts: number; doubleDeck: boolean }) {
+export function TrainArt({ parts, doubleDeck }: { parts: number; doubleDeck: boolean }) {
   const colors = useModeColors().train;
   const cars = Math.max(2, Math.min(parts, 8));
   return (
